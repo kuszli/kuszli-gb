@@ -46,6 +46,45 @@ opcode_array = new (uint8_t (cpu::*[256])()){
 &cpu::instF5, &cpu::instF6, &cpu::instF7, &cpu::instF8, &cpu::instF9, &cpu::instFA, &cpu::instFB, 
 &cpu::instFC, &cpu::instFD, &cpu::instFE, &cpu::instFF };
 
+CB_array = new (uint8_t (cpu::*[256])()){
+&cpu::CBinst00, &cpu::CBinst01, &cpu::CBinst02, &cpu::CBinst03, &cpu::CBinst04, &cpu::CBinst05, &cpu::CBinst06, 
+&cpu::CBinst07, &cpu::CBinst08, &cpu::CBinst09, &cpu::CBinst0A, &cpu::CBinst0B, &cpu::CBinst0C, &cpu::CBinst0D, 
+&cpu::CBinst0E, &cpu::CBinst0F, &cpu::CBinst10, &cpu::CBinst11, &cpu::CBinst12, &cpu::CBinst13, &cpu::CBinst14, 
+&cpu::CBinst15, &cpu::CBinst16, &cpu::CBinst17, &cpu::CBinst18, &cpu::CBinst19, &cpu::CBinst1A, &cpu::CBinst1B, 
+&cpu::CBinst1C, &cpu::CBinst1D, &cpu::CBinst1E, &cpu::CBinst1F, &cpu::CBinst20, &cpu::CBinst21, &cpu::CBinst22, 
+&cpu::CBinst23, &cpu::CBinst24, &cpu::CBinst25, &cpu::CBinst26, &cpu::CBinst27, &cpu::CBinst28, &cpu::CBinst29, 
+&cpu::CBinst2A, &cpu::CBinst2B, &cpu::CBinst2C, &cpu::CBinst2D, &cpu::CBinst2E, &cpu::CBinst2F, &cpu::CBinst30, 
+&cpu::CBinst31, &cpu::CBinst32, &cpu::CBinst33, &cpu::CBinst34, &cpu::CBinst35, &cpu::CBinst36, &cpu::CBinst37, 
+&cpu::CBinst38, &cpu::CBinst39, &cpu::CBinst3A, &cpu::CBinst3B, &cpu::CBinst3C, &cpu::CBinst3D, &cpu::CBinst3E, 
+&cpu::CBinst3F, &cpu::CBinst40, &cpu::CBinst41, &cpu::CBinst42, &cpu::CBinst43, &cpu::CBinst44, &cpu::CBinst45, 
+&cpu::CBinst46, &cpu::CBinst47, &cpu::CBinst48, &cpu::CBinst49, &cpu::CBinst4A, &cpu::CBinst4B, &cpu::CBinst4C, 
+&cpu::CBinst4D, &cpu::CBinst4E, &cpu::CBinst4F, &cpu::CBinst50, &cpu::CBinst51, &cpu::CBinst52, &cpu::CBinst53, 
+&cpu::CBinst54, &cpu::CBinst55, &cpu::CBinst56, &cpu::CBinst57, &cpu::CBinst58, &cpu::CBinst59, &cpu::CBinst5A, 
+&cpu::CBinst5B, &cpu::CBinst5C, &cpu::CBinst5D, &cpu::CBinst5E, &cpu::CBinst5F, &cpu::CBinst60, &cpu::CBinst61, 
+&cpu::CBinst62, &cpu::CBinst63, &cpu::CBinst64, &cpu::CBinst65, &cpu::CBinst66, &cpu::CBinst67, &cpu::CBinst68, 
+&cpu::CBinst69, &cpu::CBinst6A, &cpu::CBinst6B, &cpu::CBinst6C, &cpu::CBinst6D, &cpu::CBinst6E, &cpu::CBinst6F, 
+&cpu::CBinst70, &cpu::CBinst71, &cpu::CBinst72, &cpu::CBinst73, &cpu::CBinst74, &cpu::CBinst75, &cpu::CBinst76, 
+&cpu::CBinst77, &cpu::CBinst78, &cpu::CBinst79, &cpu::CBinst7A, &cpu::CBinst7B, &cpu::CBinst7C, &cpu::CBinst7D, 
+&cpu::CBinst7E, &cpu::CBinst7F, &cpu::CBinst80, &cpu::CBinst81, &cpu::CBinst82, &cpu::CBinst83, &cpu::CBinst84, 
+&cpu::CBinst85, &cpu::CBinst86, &cpu::CBinst87, &cpu::CBinst88, &cpu::CBinst89, &cpu::CBinst8A, &cpu::CBinst8B, 
+&cpu::CBinst8C, &cpu::CBinst8D, &cpu::CBinst8E, &cpu::CBinst8F, &cpu::CBinst90, &cpu::CBinst91, &cpu::CBinst92, 
+&cpu::CBinst93, &cpu::CBinst94, &cpu::CBinst95, &cpu::CBinst96, &cpu::CBinst97, &cpu::CBinst98, &cpu::CBinst99, 
+&cpu::CBinst9A, &cpu::CBinst9B, &cpu::CBinst9C, &cpu::CBinst9D, &cpu::CBinst9E, &cpu::CBinst9F, &cpu::CBinstA0, 
+&cpu::CBinstA1, &cpu::CBinstA2, &cpu::CBinstA3, &cpu::CBinstA4, &cpu::CBinstA5, &cpu::CBinstA6, &cpu::CBinstA7, 
+&cpu::CBinstA8, &cpu::CBinstA9, &cpu::CBinstAA, &cpu::CBinstAB, &cpu::CBinstAC, &cpu::CBinstAD, &cpu::CBinstAE, 
+&cpu::CBinstAF, &cpu::CBinstB0, &cpu::CBinstB1, &cpu::CBinstB2, &cpu::CBinstB3, &cpu::CBinstB4, &cpu::CBinstB5, 
+&cpu::CBinstB6, &cpu::CBinstB7, &cpu::CBinstB8, &cpu::CBinstB9, &cpu::CBinstBA, &cpu::CBinstBB, &cpu::CBinstBC, 
+&cpu::CBinstBD, &cpu::CBinstBE, &cpu::CBinstBF, &cpu::CBinstC0, &cpu::CBinstC1, &cpu::CBinstC2, &cpu::CBinstC3, 
+&cpu::CBinstC4, &cpu::CBinstC5, &cpu::CBinstC6, &cpu::CBinstC7, &cpu::CBinstC8, &cpu::CBinstC9, &cpu::CBinstCA, 
+&cpu::CBinstCB, &cpu::CBinstCC, &cpu::CBinstCD, &cpu::CBinstCE, &cpu::CBinstCF, &cpu::CBinstD0, &cpu::CBinstD1, 
+&cpu::CBinstD2, &cpu::CBinstD3, &cpu::CBinstD4, &cpu::CBinstD5, &cpu::CBinstD6, &cpu::CBinstD7, &cpu::CBinstD8, 
+&cpu::CBinstD9, &cpu::CBinstDA, &cpu::CBinstDB, &cpu::CBinstDC, &cpu::CBinstDD, &cpu::CBinstDE, &cpu::CBinstDF, 
+&cpu::CBinstE0, &cpu::CBinstE1, &cpu::CBinstE2, &cpu::CBinstE3, &cpu::CBinstE4, &cpu::CBinstE5, &cpu::CBinstE6, 
+&cpu::CBinstE7, &cpu::CBinstE8, &cpu::CBinstE9, &cpu::CBinstEA, &cpu::CBinstEB, &cpu::CBinstEC, &cpu::CBinstED, 
+&cpu::CBinstEE, &cpu::CBinstEF, &cpu::CBinstF0, &cpu::CBinstF1, &cpu::CBinstF2, &cpu::CBinstF3, &cpu::CBinstF4, 
+&cpu::CBinstF5, &cpu::CBinstF6, &cpu::CBinstF7, &cpu::CBinstF8, &cpu::CBinstF9, &cpu::CBinstFA, &cpu::CBinstFB, 
+&cpu::CBinstFC, &cpu::CBinstFD, &cpu::CBinstFE, &cpu::CBinstFF };
+
 
 rom.open("src/rom.gb", std::ios::in | std::ios::binary);
 
@@ -1029,8 +1068,7 @@ uint8_t cpu::JP_HLADDR(){
 
 //TODO
 uint8_t cpu::PREFIX_CB(){
-++PC;
-return 8;
+return (this->*CB_array[++PC])();
 }
 
 uint8_t cpu::CALL_Z(){
@@ -1640,7 +1678,7 @@ uint8_t cpu::BIT(const uint8_t bit, const uint8_t reg){
 
 	
 
-uint8_t cpu::BIT_HLAADR(const uint8_t bit){
+uint8_t cpu::BIT_HLADDR(const uint8_t bit){
 
 	if(memory[HL] & 1 << bit)
 		F &= ~ZERO_FLAG;
@@ -1659,7 +1697,7 @@ uint8_t cpu::RES(const uint8_t bit, uint8_t &reg){
 }
 
 	
-uint8_t cpu::RES_HLAADR(const uint8_t bit){
+uint8_t cpu::RES_HLADDR(const uint8_t bit){
 	memory[HL] &= ~(1 << bit);
 	return 16;
 }
@@ -1669,7 +1707,7 @@ uint8_t cpu::SET(const uint8_t bit, uint8_t &reg){
 	return 8;
 }
 	
-uint8_t cpu::SET_HLAADR(const uint8_t bit){
+uint8_t cpu::SET_HLADDR(const uint8_t bit){
 	memory[HL] |= (1 << bit);
 	return 16;
 }
@@ -2706,15 +2744,1032 @@ uint8_t cpu::instFF(){
 return RST(0x38);
 }
 
+//****************************************************************
+//**************Prefix CB*****************************************
 
-		
+uint8_t cpu::CBinst00(){
+return RLC(B);
+}
 
+uint8_t cpu::CBinst01(){
+return RLC(C);
+}
 
+uint8_t cpu::CBinst02(){
+return RLC(D);
+}
 
+uint8_t cpu::CBinst03(){
+return RLC(E);
+}
 
+uint8_t cpu::CBinst04(){
+return RLC(H);
+}
 
+uint8_t cpu::CBinst05(){
+return RLC(L);
+}
 
+uint8_t cpu::CBinst06(){
+return RLC_HLADDR();
+}
 
+uint8_t cpu::CBinst07(){
+return RLC(A);
+}
+
+uint8_t cpu::CBinst08(){
+return RRC(B);
+}
+
+uint8_t cpu::CBinst09(){
+return RRC(C);
+}
+
+uint8_t cpu::CBinst0A(){
+return RRC(D);
+}
+
+uint8_t cpu::CBinst0B(){
+return RRC(E);
+}
+
+uint8_t cpu::CBinst0C(){
+return RRC(H);
+}
+
+uint8_t cpu::CBinst0D(){
+return RRC(L);
+}
+
+uint8_t cpu::CBinst0E(){
+return RRC_HLADDR();
+}
+
+uint8_t cpu::CBinst0F(){
+return RRC(A);
+}
+
+uint8_t cpu::CBinst10(){
+return RL(B);
+}
+
+uint8_t cpu::CBinst11(){
+return RL(C);
+}
+
+uint8_t cpu::CBinst12(){
+return RL(D);
+}
+
+uint8_t cpu::CBinst13(){
+return RL(E);
+}
+
+uint8_t cpu::CBinst14(){
+return RL(H);
+}
+
+uint8_t cpu::CBinst15(){
+return RL(L);
+}
+
+uint8_t cpu::CBinst16(){
+return RL_HLADDR();
+}
+
+uint8_t cpu::CBinst17(){
+return RL(A);
+}
+
+uint8_t cpu::CBinst18(){
+return RR(B);
+}
+
+uint8_t cpu::CBinst19(){
+return RR(C);
+}
+
+uint8_t cpu::CBinst1A(){
+return RR(D);
+}
+
+uint8_t cpu::CBinst1B(){
+return RR(E);
+}
+
+uint8_t cpu::CBinst1C(){
+return RR(H);
+}
+
+uint8_t cpu::CBinst1D(){
+return RR(L);
+}
+
+uint8_t cpu::CBinst1E(){
+return RR_HLADDR();
+}
+
+uint8_t cpu::CBinst1F(){
+return RR(A);
+}
+
+uint8_t cpu::CBinst20(){
+return SLA(B);
+}
+
+uint8_t cpu::CBinst21(){
+return SLA(C);
+}
+
+uint8_t cpu::CBinst22(){
+return SLA(D);
+}
+
+uint8_t cpu::CBinst23(){
+return SLA(E);
+}
+
+uint8_t cpu::CBinst24(){
+return SLA(H);
+}
+
+uint8_t cpu::CBinst25(){
+return SLA(L);
+}
+
+uint8_t cpu::CBinst26(){
+return SLA_HLADDR();
+}
+
+uint8_t cpu::CBinst27(){
+return SLA(A);
+}
+
+uint8_t cpu::CBinst28(){
+return SRA(B);
+}
+
+uint8_t cpu::CBinst29(){
+return SRA(C);
+}
+
+uint8_t cpu::CBinst2A(){
+return SRA(D);
+}
+
+uint8_t cpu::CBinst2B(){
+return SRA(E);
+}
+
+uint8_t cpu::CBinst2C(){
+return SRA(H);
+}
+
+uint8_t cpu::CBinst2D(){
+return SRA(L);
+}
+
+uint8_t cpu::CBinst2E(){
+return SRA_HLADDR();
+}
+
+uint8_t cpu::CBinst2F(){
+return SRA(A);
+}
+
+uint8_t cpu::CBinst30(){
+return SWAP(B);
+}
+
+uint8_t cpu::CBinst31(){
+return SWAP(C);
+}
+
+uint8_t cpu::CBinst32(){
+return SWAP(D);
+}
+
+uint8_t cpu::CBinst33(){
+return SWAP(E);
+}
+
+uint8_t cpu::CBinst34(){
+return SWAP(H);
+}
+
+uint8_t cpu::CBinst35(){
+return SWAP(L);
+}
+
+uint8_t cpu::CBinst36(){
+return SWAP_HLADDR();
+}
+
+uint8_t cpu::CBinst37(){
+return SWAP(A);
+}
+
+uint8_t cpu::CBinst38(){
+return SRL(B);
+}
+
+uint8_t cpu::CBinst39(){
+return SRL(C);
+}
+
+uint8_t cpu::CBinst3A(){
+return SRL(D);
+}
+
+uint8_t cpu::CBinst3B(){
+return SRL(E);
+}
+
+uint8_t cpu::CBinst3C(){
+return SRL(H);
+}
+
+uint8_t cpu::CBinst3D(){
+return SRL(L);
+}
+
+uint8_t cpu::CBinst3E(){
+return SRL_HLADDR();
+}
+
+uint8_t cpu::CBinst3F(){
+return SRL(A);
+}
+
+uint8_t cpu::CBinst40(){
+return BIT(0,B);
+}
+
+uint8_t cpu::CBinst41(){
+return BIT(0,C);
+}
+
+uint8_t cpu::CBinst42(){
+return BIT(0,D);
+}
+
+uint8_t cpu::CBinst43(){
+return BIT(0,E);
+}
+
+uint8_t cpu::CBinst44(){
+return BIT(0,H);
+}
+
+uint8_t cpu::CBinst45(){
+return BIT(0,L);
+}
+
+uint8_t cpu::CBinst46(){
+return BIT_HLADDR(0);
+}
+
+uint8_t cpu::CBinst47(){
+return BIT(0,A);
+}
+
+uint8_t cpu::CBinst48(){
+return BIT(1,B);
+}
+
+uint8_t cpu::CBinst49(){
+return BIT(1,C);
+}
+
+uint8_t cpu::CBinst4A(){
+return BIT(1,D);
+}
+
+uint8_t cpu::CBinst4B(){
+return BIT(1,E);
+}
+
+uint8_t cpu::CBinst4C(){
+return BIT(1,H);
+}
+
+uint8_t cpu::CBinst4D(){
+return BIT(1,L);
+}
+
+uint8_t cpu::CBinst4E(){
+return BIT_HLADDR(1);
+}
+
+uint8_t cpu::CBinst4F(){
+return BIT(1,A);
+}
+
+uint8_t cpu::CBinst50(){
+return BIT(2,B);
+}
+
+uint8_t cpu::CBinst51(){
+return BIT(2,C);
+}
+
+uint8_t cpu::CBinst52(){
+return BIT(2,D);
+}
+
+uint8_t cpu::CBinst53(){
+return BIT(2,E);
+}
+
+uint8_t cpu::CBinst54(){
+return BIT(2,H);
+}
+
+uint8_t cpu::CBinst55(){
+return BIT(2,L);
+}
+
+uint8_t cpu::CBinst56(){
+return BIT_HLADDR(2);
+}
+
+uint8_t cpu::CBinst57(){
+return BIT(2,A);
+}
+
+uint8_t cpu::CBinst58(){
+return BIT(3,B);
+}
+
+uint8_t cpu::CBinst59(){
+return BIT(3,C);
+}
+
+uint8_t cpu::CBinst5A(){
+return BIT(3,D);
+}
+
+uint8_t cpu::CBinst5B(){
+return BIT(3,E);
+}
+
+uint8_t cpu::CBinst5C(){
+return BIT(3,H);
+}
+
+uint8_t cpu::CBinst5D(){
+return BIT(3,L);
+}
+
+uint8_t cpu::CBinst5E(){
+return BIT_HLADDR(3);
+}
+
+uint8_t cpu::CBinst5F(){
+return BIT(3,A);
+}
+
+uint8_t cpu::CBinst60(){
+return BIT(4,B);
+}
+
+uint8_t cpu::CBinst61(){
+return BIT(4,C);
+}
+
+uint8_t cpu::CBinst62(){
+return BIT(4,D);
+}
+
+uint8_t cpu::CBinst63(){
+return BIT(4,E);
+}
+
+uint8_t cpu::CBinst64(){
+return BIT(4,H);
+}
+
+uint8_t cpu::CBinst65(){
+return BIT(4,L);
+}
+
+uint8_t cpu::CBinst66(){
+return BIT_HLADDR(4);
+}
+
+uint8_t cpu::CBinst67(){
+return BIT(4,A);
+}
+
+uint8_t cpu::CBinst68(){
+return BIT(5,B);
+}
+
+uint8_t cpu::CBinst69(){
+return BIT(5,C);
+}
+
+uint8_t cpu::CBinst6A(){
+return BIT(5,D);
+}
+
+uint8_t cpu::CBinst6B(){
+return BIT(5,E);
+}
+
+uint8_t cpu::CBinst6C(){
+return BIT(5,H);
+}
+
+uint8_t cpu::CBinst6D(){
+return BIT(5,L);
+}
+
+uint8_t cpu::CBinst6E(){
+return BIT_HLADDR(5);
+}
+
+uint8_t cpu::CBinst6F(){
+return BIT(5,A);
+}
+
+uint8_t cpu::CBinst70(){
+return BIT(6,B);
+}
+
+uint8_t cpu::CBinst71(){
+return BIT(6,C);
+}
+
+uint8_t cpu::CBinst72(){
+return BIT(6,D);
+}
+
+uint8_t cpu::CBinst73(){
+return BIT(6,E);
+}
+
+uint8_t cpu::CBinst74(){
+return BIT(6,H);
+}
+
+uint8_t cpu::CBinst75(){
+return BIT(6,L);
+}
+
+uint8_t cpu::CBinst76(){
+return BIT_HLADDR(6);
+}
+
+uint8_t cpu::CBinst77(){
+return BIT(6,A);
+}
+
+uint8_t cpu::CBinst78(){
+return BIT(7,B);
+}
+
+uint8_t cpu::CBinst79(){
+return BIT(7,C);
+}
+
+uint8_t cpu::CBinst7A(){
+return BIT(7,D);
+}
+
+uint8_t cpu::CBinst7B(){
+return BIT(7,E);
+}
+
+uint8_t cpu::CBinst7C(){
+return BIT(7,H);
+}
+
+uint8_t cpu::CBinst7D(){
+return BIT(7,L);
+}
+
+uint8_t cpu::CBinst7E(){
+return BIT_HLADDR(7);
+}
+
+uint8_t cpu::CBinst7F(){
+return BIT(7,A);
+}
+
+uint8_t cpu::CBinst80(){
+return RES(0,B);
+}
+
+uint8_t cpu::CBinst81(){
+return RES(0,C);
+}
+
+uint8_t cpu::CBinst82(){
+return RES(0,D);
+}
+
+uint8_t cpu::CBinst83(){
+return RES(0,E);
+}
+
+uint8_t cpu::CBinst84(){
+return RES(0,H);
+}
+
+uint8_t cpu::CBinst85(){
+return RES(0,L);
+}
+
+uint8_t cpu::CBinst86(){
+return RES_HLADDR(0);
+}
+
+uint8_t cpu::CBinst87(){
+return RES(0,A);
+}
+
+uint8_t cpu::CBinst88(){
+return RES(1,B);
+}
+
+uint8_t cpu::CBinst89(){
+return RES(1,C);
+}
+
+uint8_t cpu::CBinst8A(){
+return RES(1,D);
+}
+
+uint8_t cpu::CBinst8B(){
+return RES(1,E);
+}
+
+uint8_t cpu::CBinst8C(){
+return RES(1,H);
+}
+
+uint8_t cpu::CBinst8D(){
+return RES(1,L);
+}
+
+uint8_t cpu::CBinst8E(){
+return RES_HLADDR(1);
+}
+
+uint8_t cpu::CBinst8F(){
+return RES(1,A);
+}
+
+uint8_t cpu::CBinst90(){
+return RES(2,B);
+}
+
+uint8_t cpu::CBinst91(){
+return RES(2,C);
+}
+
+uint8_t cpu::CBinst92(){
+return RES(2,D);
+}
+
+uint8_t cpu::CBinst93(){
+return RES(2,E);
+}
+
+uint8_t cpu::CBinst94(){
+return RES(2,H);
+}
+
+uint8_t cpu::CBinst95(){
+return RES(2,L);
+}
+
+uint8_t cpu::CBinst96(){
+return RES_HLADDR(2);
+}
+
+uint8_t cpu::CBinst97(){
+return RES(2,A);
+}
+
+uint8_t cpu::CBinst98(){
+return RES(3,B);
+}
+
+uint8_t cpu::CBinst99(){
+return RES(3,C);
+}
+
+uint8_t cpu::CBinst9A(){
+return RES(3,D);
+}
+
+uint8_t cpu::CBinst9B(){
+return RES(3,E);
+}
+
+uint8_t cpu::CBinst9C(){
+return RES(3,H);
+}
+
+uint8_t cpu::CBinst9D(){
+return RES(3,L);
+}
+
+uint8_t cpu::CBinst9E(){
+return RES_HLADDR(3);
+}
+
+uint8_t cpu::CBinst9F(){
+return RES(3,A);
+}
+
+uint8_t cpu::CBinstA0(){
+return RES(4,B);
+}
+
+uint8_t cpu::CBinstA1(){
+return RES(4,C);
+}
+
+uint8_t cpu::CBinstA2(){
+return RES(4,D);
+}
+
+uint8_t cpu::CBinstA3(){
+return RES(4,E);
+}
+
+uint8_t cpu::CBinstA4(){
+return RES(4,H);
+}
+
+uint8_t cpu::CBinstA5(){
+return RES(4,L);
+}
+
+uint8_t cpu::CBinstA6(){
+return RES_HLADDR(4);
+}
+
+uint8_t cpu::CBinstA7(){
+return RES(4,A);
+}
+
+uint8_t cpu::CBinstA8(){
+return RES(5,B);
+}
+
+uint8_t cpu::CBinstA9(){
+return RES(5,C);
+}
+
+uint8_t cpu::CBinstAA(){
+return RES(5,D);
+}
+
+uint8_t cpu::CBinstAB(){
+return RES(5,E);
+}
+
+uint8_t cpu::CBinstAC(){
+return RES(5,H);
+}
+
+uint8_t cpu::CBinstAD(){
+return RES(5,L);
+}
+
+uint8_t cpu::CBinstAE(){
+return RES_HLADDR(5);
+}
+
+uint8_t cpu::CBinstAF(){
+return RES(5,A);
+}
+
+uint8_t cpu::CBinstB0(){
+return RES(6,B);
+}
+
+uint8_t cpu::CBinstB1(){
+return RES(6,C);
+}
+
+uint8_t cpu::CBinstB2(){
+return RES(6,D);
+}
+
+uint8_t cpu::CBinstB3(){
+return RES(6,E);
+}
+
+uint8_t cpu::CBinstB4(){
+return RES(6,H);
+}
+
+uint8_t cpu::CBinstB5(){
+return RES(6,L);
+}
+
+uint8_t cpu::CBinstB6(){
+return RES_HLADDR(6);
+}
+
+uint8_t cpu::CBinstB7(){
+return RES(6,A);
+}
+
+uint8_t cpu::CBinstB8(){
+return RES(7,B);
+}
+
+uint8_t cpu::CBinstB9(){
+return RES(7,C);
+}
+
+uint8_t cpu::CBinstBA(){
+return RES(7,D);
+}
+
+uint8_t cpu::CBinstBB(){
+return RES(7,E);
+}
+
+uint8_t cpu::CBinstBC(){
+return RES(7,H);
+}
+
+uint8_t cpu::CBinstBD(){
+return RES(7,L);
+}
+
+uint8_t cpu::CBinstBE(){
+return RES_HLADDR(7);
+}
+
+uint8_t cpu::CBinstBF(){
+return RES(7,A);
+}
+
+uint8_t cpu::CBinstC0(){
+return SET(0,B);
+}
+
+uint8_t cpu::CBinstC1(){
+return SET(0,C);
+}
+
+uint8_t cpu::CBinstC2(){
+return SET(0,D);
+}
+
+uint8_t cpu::CBinstC3(){
+return SET(0,E);
+}
+
+uint8_t cpu::CBinstC4(){
+return SET(0,H);
+}
+
+uint8_t cpu::CBinstC5(){
+return SET(0,L);
+}
+
+uint8_t cpu::CBinstC6(){
+return SET_HLADDR(0);
+}
+
+uint8_t cpu::CBinstC7(){
+return SET(0,A);
+}
+
+uint8_t cpu::CBinstC8(){
+return SET(1,B);
+}
+
+uint8_t cpu::CBinstC9(){
+return SET(1,C);
+}
+
+uint8_t cpu::CBinstCA(){
+return SET(1,D);
+}
+
+uint8_t cpu::CBinstCB(){
+return SET(1,E);
+}
+
+uint8_t cpu::CBinstCC(){
+return SET(1,H);
+}
+
+uint8_t cpu::CBinstCD(){
+return SET(1,L);
+}
+
+uint8_t cpu::CBinstCE(){
+return SET_HLADDR(1);
+}
+
+uint8_t cpu::CBinstCF(){
+return SET(1,A);
+}
+
+uint8_t cpu::CBinstD0(){
+return SET(2,B);
+}
+
+uint8_t cpu::CBinstD1(){
+return SET(2,C);
+}
+
+uint8_t cpu::CBinstD2(){
+return SET(2,D);
+}
+
+uint8_t cpu::CBinstD3(){
+return SET(2,E);
+}
+
+uint8_t cpu::CBinstD4(){
+return SET(2,H);
+}
+
+uint8_t cpu::CBinstD5(){
+return SET(2,L);
+}
+
+uint8_t cpu::CBinstD6(){
+return SET_HLADDR(2);
+}
+
+uint8_t cpu::CBinstD7(){
+return SET(2,A);
+}
+
+uint8_t cpu::CBinstD8(){
+return SET(3,B);
+}
+
+uint8_t cpu::CBinstD9(){
+return SET(3,C);
+}
+
+uint8_t cpu::CBinstDA(){
+return SET(3,D);
+}
+
+uint8_t cpu::CBinstDB(){
+return SET(3,E);
+}
+
+uint8_t cpu::CBinstDC(){
+return SET(3,H);
+}
+
+uint8_t cpu::CBinstDD(){
+return SET(3,L);
+}
+
+uint8_t cpu::CBinstDE(){
+return SET_HLADDR(3);
+}
+
+uint8_t cpu::CBinstDF(){
+return SET(3,A);
+}
+
+uint8_t cpu::CBinstE0(){
+return SET(4,B);
+}
+
+uint8_t cpu::CBinstE1(){
+return SET(4,C);
+}
+
+uint8_t cpu::CBinstE2(){
+return SET(4,D);
+}
+
+uint8_t cpu::CBinstE3(){
+return SET(4,E);
+}
+
+uint8_t cpu::CBinstE4(){
+return SET(4,H);
+}
+
+uint8_t cpu::CBinstE5(){
+return SET(4,L);
+}
+
+uint8_t cpu::CBinstE6(){
+return SET_HLADDR(4);
+}
+
+uint8_t cpu::CBinstE7(){
+return SET(4,A);
+}
+
+uint8_t cpu::CBinstE8(){
+return SET(5,B);
+}
+
+uint8_t cpu::CBinstE9(){
+return SET(5,C);
+}
+
+uint8_t cpu::CBinstEA(){
+return SET(5,D);
+}
+
+uint8_t cpu::CBinstEB(){
+return SET(5,E);
+}
+
+uint8_t cpu::CBinstEC(){
+return SET(5,H);
+}
+
+uint8_t cpu::CBinstED(){
+return SET(5,L);
+}
+
+uint8_t cpu::CBinstEE(){
+return SET_HLADDR(5);
+}
+
+uint8_t cpu::CBinstEF(){
+return SET(5,A);
+}
+
+uint8_t cpu::CBinstF0(){
+return SET(6,B);
+}
+
+uint8_t cpu::CBinstF1(){
+return SET(6,C);
+}
+
+uint8_t cpu::CBinstF2(){
+return SET(6,D);
+}
+
+uint8_t cpu::CBinstF3(){
+return SET(6,E);
+}
+
+uint8_t cpu::CBinstF4(){
+return SET(6,H);
+}
+
+uint8_t cpu::CBinstF5(){
+return SET(6,L);
+}
+
+uint8_t cpu::CBinstF6(){
+return SET_HLADDR(6);
+}
+
+uint8_t cpu::CBinstF7(){
+return SET(6,A);
+}
+
+uint8_t cpu::CBinstF8(){
+return SET(7,B);
+}
+
+uint8_t cpu::CBinstF9(){
+return SET(7,C);
+}
+
+uint8_t cpu::CBinstFA(){
+return SET(7,D);
+}
+
+uint8_t cpu::CBinstFB(){
+return SET(7,E);
+}
+
+uint8_t cpu::CBinstFC(){
+return SET(7,H);
+}
+
+uint8_t cpu::CBinstFD(){
+return SET(7,L);
+}
+
+uint8_t cpu::CBinstFE(){
+return SET_HLADDR(7);
+}
+
+uint8_t cpu::CBinstFF(){
+return SET(7,A);
+}
 
 
 

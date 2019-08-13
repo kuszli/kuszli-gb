@@ -286,31 +286,19 @@ carry flag (4 most significant bits)
 
 	uint8_t BIT(const uint8_t bit, const uint8_t reg);
 
-	uint8_t BIT_HLAADR(const uint8_t bit);
+	uint8_t BIT_HLADDR(const uint8_t bit);
 
 	uint8_t RES(const uint8_t bit, uint8_t &reg);
 	
-	uint8_t RES_HLAADR(const uint8_t bit);
+	uint8_t RES_HLADDR(const uint8_t bit);
 
 	uint8_t SET(const uint8_t bit, uint8_t &reg);
 	
-	uint8_t SET_HLAADR(const uint8_t bit);
+	uint8_t SET_HLADDR(const uint8_t bit);
 
 
 
 //***************************************************************************
-	
-
-	
-public:
-
-	cpu();
-	~cpu();
-	//uint8_t (cpu::**opcode_array)();
-	uint8_t (cpu::**opcode_array)();
-	
-	uint8_t decode(){return memory[PC++];}
-	uint8_t execute(const uint8_t opcode){return (this->*opcode_array[opcode])();} 
 
 //*********cpu intructions***************************************************
 
@@ -571,6 +559,278 @@ uint8_t instFD();
 uint8_t instFE();
 uint8_t instFF();
 
+//*******************************************************************************
+//****************cb instructions************************************************
+
+uint8_t CBinst00();
+uint8_t CBinst01();
+uint8_t CBinst02();
+uint8_t CBinst03();
+uint8_t CBinst04();
+uint8_t CBinst05();
+uint8_t CBinst06();
+uint8_t CBinst07();
+uint8_t CBinst08();
+uint8_t CBinst09();
+uint8_t CBinst0A();
+uint8_t CBinst0B();
+uint8_t CBinst0C();
+uint8_t CBinst0D();
+uint8_t CBinst0E();
+uint8_t CBinst0F();
+uint8_t CBinst10();
+uint8_t CBinst11();
+uint8_t CBinst12();
+uint8_t CBinst13();
+uint8_t CBinst14();
+uint8_t CBinst15();
+uint8_t CBinst16();
+uint8_t CBinst17();
+uint8_t CBinst18();
+uint8_t CBinst19();
+uint8_t CBinst1A();
+uint8_t CBinst1B();
+uint8_t CBinst1C();
+uint8_t CBinst1D();
+uint8_t CBinst1E();
+uint8_t CBinst1F();
+uint8_t CBinst20();
+uint8_t CBinst21();
+uint8_t CBinst22();
+uint8_t CBinst23();
+uint8_t CBinst24();
+uint8_t CBinst25();
+uint8_t CBinst26();
+uint8_t CBinst27();
+uint8_t CBinst28();
+uint8_t CBinst29();
+uint8_t CBinst2A();
+uint8_t CBinst2B();
+uint8_t CBinst2C();
+uint8_t CBinst2D();
+uint8_t CBinst2E();
+uint8_t CBinst2F();
+uint8_t CBinst30();
+uint8_t CBinst31();
+uint8_t CBinst32();
+uint8_t CBinst33();
+uint8_t CBinst34();
+uint8_t CBinst35();
+uint8_t CBinst36();
+uint8_t CBinst37();
+uint8_t CBinst38();
+uint8_t CBinst39();
+uint8_t CBinst3A();
+uint8_t CBinst3B();
+uint8_t CBinst3C();
+uint8_t CBinst3D();
+uint8_t CBinst3E();
+uint8_t CBinst3F();
+uint8_t CBinst40();
+uint8_t CBinst41();
+uint8_t CBinst42();
+uint8_t CBinst43();
+uint8_t CBinst44();
+uint8_t CBinst45();
+uint8_t CBinst46();
+uint8_t CBinst47();
+uint8_t CBinst48();
+uint8_t CBinst49();
+uint8_t CBinst4A();
+uint8_t CBinst4B();
+uint8_t CBinst4C();
+uint8_t CBinst4D();
+uint8_t CBinst4E();
+uint8_t CBinst4F();
+uint8_t CBinst50();
+uint8_t CBinst51();
+uint8_t CBinst52();
+uint8_t CBinst53();
+uint8_t CBinst54();
+uint8_t CBinst55();
+uint8_t CBinst56();
+uint8_t CBinst57();
+uint8_t CBinst58();
+uint8_t CBinst59();
+uint8_t CBinst5A();
+uint8_t CBinst5B();
+uint8_t CBinst5C();
+uint8_t CBinst5D();
+uint8_t CBinst5E();
+uint8_t CBinst5F();
+uint8_t CBinst60();
+uint8_t CBinst61();
+uint8_t CBinst62();
+uint8_t CBinst63();
+uint8_t CBinst64();
+uint8_t CBinst65();
+uint8_t CBinst66();
+uint8_t CBinst67();
+uint8_t CBinst68();
+uint8_t CBinst69();
+uint8_t CBinst6A();
+uint8_t CBinst6B();
+uint8_t CBinst6C();
+uint8_t CBinst6D();
+uint8_t CBinst6E();
+uint8_t CBinst6F();
+uint8_t CBinst70();
+uint8_t CBinst71();
+uint8_t CBinst72();
+uint8_t CBinst73();
+uint8_t CBinst74();
+uint8_t CBinst75();
+uint8_t CBinst76();
+uint8_t CBinst77();
+uint8_t CBinst78();
+uint8_t CBinst79();
+uint8_t CBinst7A();
+uint8_t CBinst7B();
+uint8_t CBinst7C();
+uint8_t CBinst7D();
+uint8_t CBinst7E();
+uint8_t CBinst7F();
+uint8_t CBinst80();
+uint8_t CBinst81();
+uint8_t CBinst82();
+uint8_t CBinst83();
+uint8_t CBinst84();
+uint8_t CBinst85();
+uint8_t CBinst86();
+uint8_t CBinst87();
+uint8_t CBinst88();
+uint8_t CBinst89();
+uint8_t CBinst8A();
+uint8_t CBinst8B();
+uint8_t CBinst8C();
+uint8_t CBinst8D();
+uint8_t CBinst8E();
+uint8_t CBinst8F();
+uint8_t CBinst90();
+uint8_t CBinst91();
+uint8_t CBinst92();
+uint8_t CBinst93();
+uint8_t CBinst94();
+uint8_t CBinst95();
+uint8_t CBinst96();
+uint8_t CBinst97();
+uint8_t CBinst98();
+uint8_t CBinst99();
+uint8_t CBinst9A();
+uint8_t CBinst9B();
+uint8_t CBinst9C();
+uint8_t CBinst9D();
+uint8_t CBinst9E();
+uint8_t CBinst9F();
+uint8_t CBinstA0();
+uint8_t CBinstA1();
+uint8_t CBinstA2();
+uint8_t CBinstA3();
+uint8_t CBinstA4();
+uint8_t CBinstA5();
+uint8_t CBinstA6();
+uint8_t CBinstA7();
+uint8_t CBinstA8();
+uint8_t CBinstA9();
+uint8_t CBinstAA();
+uint8_t CBinstAB();
+uint8_t CBinstAC();
+uint8_t CBinstAD();
+uint8_t CBinstAE();
+uint8_t CBinstAF();
+uint8_t CBinstB0();
+uint8_t CBinstB1();
+uint8_t CBinstB2();
+uint8_t CBinstB3();
+uint8_t CBinstB4();
+uint8_t CBinstB5();
+uint8_t CBinstB6();
+uint8_t CBinstB7();
+uint8_t CBinstB8();
+uint8_t CBinstB9();
+uint8_t CBinstBA();
+uint8_t CBinstBB();
+uint8_t CBinstBC();
+uint8_t CBinstBD();
+uint8_t CBinstBE();
+uint8_t CBinstBF();
+uint8_t CBinstC0();
+uint8_t CBinstC1();
+uint8_t CBinstC2();
+uint8_t CBinstC3();
+uint8_t CBinstC4();
+uint8_t CBinstC5();
+uint8_t CBinstC6();
+uint8_t CBinstC7();
+uint8_t CBinstC8();
+uint8_t CBinstC9();
+uint8_t CBinstCA();
+uint8_t CBinstCB();
+uint8_t CBinstCC();
+uint8_t CBinstCD();
+uint8_t CBinstCE();
+uint8_t CBinstCF();
+uint8_t CBinstD0();
+uint8_t CBinstD1();
+uint8_t CBinstD2();
+uint8_t CBinstD3();
+uint8_t CBinstD4();
+uint8_t CBinstD5();
+uint8_t CBinstD6();
+uint8_t CBinstD7();
+uint8_t CBinstD8();
+uint8_t CBinstD9();
+uint8_t CBinstDA();
+uint8_t CBinstDB();
+uint8_t CBinstDC();
+uint8_t CBinstDD();
+uint8_t CBinstDE();
+uint8_t CBinstDF();
+uint8_t CBinstE0();
+uint8_t CBinstE1();
+uint8_t CBinstE2();
+uint8_t CBinstE3();
+uint8_t CBinstE4();
+uint8_t CBinstE5();
+uint8_t CBinstE6();
+uint8_t CBinstE7();
+uint8_t CBinstE8();
+uint8_t CBinstE9();
+uint8_t CBinstEA();
+uint8_t CBinstEB();
+uint8_t CBinstEC();
+uint8_t CBinstED();
+uint8_t CBinstEE();
+uint8_t CBinstEF();
+uint8_t CBinstF0();
+uint8_t CBinstF1();
+uint8_t CBinstF2();
+uint8_t CBinstF3();
+uint8_t CBinstF4();
+uint8_t CBinstF5();
+uint8_t CBinstF6();
+uint8_t CBinstF7();
+uint8_t CBinstF8();
+uint8_t CBinstF9();
+uint8_t CBinstFA();
+uint8_t CBinstFB();
+uint8_t CBinstFC();
+uint8_t CBinstFD();
+uint8_t CBinstFE();
+uint8_t CBinstFF();
+
+
+uint8_t (cpu::**opcode_array)();	
+uint8_t (cpu::**CB_array)();	
+
+//******************************************************************************
+	
+public:
+
+	cpu();
+	~cpu();
+	uint8_t decode(){return memory[PC++];}
+	uint8_t execute(const uint8_t opcode){return (this->*opcode_array[opcode])();} 
 
 };
 
