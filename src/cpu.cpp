@@ -5,16 +5,68 @@
 
 cpu::cpu(){
 memory = new uint8_t[65536];
-memory[0] = 128;
-memory[1] = 32;
-memory[2] = 64;
 PC = 0;
+
+opcode_array = new (uint8_t (cpu::*[256])()){
+&cpu::inst00, &cpu::inst01, &cpu::inst02, &cpu::inst03, &cpu::inst04, &cpu::inst05, &cpu::inst06, 
+&cpu::inst07, &cpu::inst08, &cpu::inst09, &cpu::inst0A, &cpu::inst0B, &cpu::inst0C, &cpu::inst0D, 
+&cpu::inst0E, &cpu::inst0F, &cpu::inst10, &cpu::inst11, &cpu::inst12, &cpu::inst13, &cpu::inst14, 
+&cpu::inst15, &cpu::inst16, &cpu::inst17, &cpu::inst18, &cpu::inst19, &cpu::inst1A, &cpu::inst1B, 
+&cpu::inst1C, &cpu::inst1D, &cpu::inst1E, &cpu::inst1F, &cpu::inst20, &cpu::inst21, &cpu::inst22, 
+&cpu::inst23, &cpu::inst24, &cpu::inst25, &cpu::inst26, &cpu::inst27, &cpu::inst28, &cpu::inst29, 
+&cpu::inst2A, &cpu::inst2B, &cpu::inst2C, &cpu::inst2D, &cpu::inst2E, &cpu::inst2F, &cpu::inst30, 
+&cpu::inst31, &cpu::inst32, &cpu::inst33, &cpu::inst34, &cpu::inst35, &cpu::inst36, &cpu::inst37, 
+&cpu::inst38, &cpu::inst39, &cpu::inst3A, &cpu::inst3B, &cpu::inst3C, &cpu::inst3D, &cpu::inst3E, 
+&cpu::inst3F, &cpu::inst40, &cpu::inst41, &cpu::inst42, &cpu::inst43, &cpu::inst44, &cpu::inst45, 
+&cpu::inst46, &cpu::inst47, &cpu::inst48, &cpu::inst49, &cpu::inst4A, &cpu::inst4B, &cpu::inst4C, 
+&cpu::inst4D, &cpu::inst4E, &cpu::inst4F, &cpu::inst50, &cpu::inst51, &cpu::inst52, &cpu::inst53, 
+&cpu::inst54, &cpu::inst55, &cpu::inst56, &cpu::inst57, &cpu::inst58, &cpu::inst59, &cpu::inst5A, 
+&cpu::inst5B, &cpu::inst5C, &cpu::inst5D, &cpu::inst5E, &cpu::inst5F, &cpu::inst60, &cpu::inst61, 
+&cpu::inst62, &cpu::inst63, &cpu::inst64, &cpu::inst65, &cpu::inst66, &cpu::inst67, &cpu::inst68, 
+&cpu::inst69, &cpu::inst6A, &cpu::inst6B, &cpu::inst6C, &cpu::inst6D, &cpu::inst6E, &cpu::inst6F, 
+&cpu::inst70, &cpu::inst71, &cpu::inst72, &cpu::inst73, &cpu::inst74, &cpu::inst75, &cpu::inst76, 
+&cpu::inst77, &cpu::inst78, &cpu::inst79, &cpu::inst7A, &cpu::inst7B, &cpu::inst7C, &cpu::inst7D, 
+&cpu::inst7E, &cpu::inst7F, &cpu::inst80, &cpu::inst81, &cpu::inst82, &cpu::inst83, &cpu::inst84, 
+&cpu::inst85, &cpu::inst86, &cpu::inst87, &cpu::inst88, &cpu::inst89, &cpu::inst8A, &cpu::inst8B, 
+&cpu::inst8C, &cpu::inst8D, &cpu::inst8E, &cpu::inst8F, &cpu::inst90, &cpu::inst91, &cpu::inst92, 
+&cpu::inst93, &cpu::inst94, &cpu::inst95, &cpu::inst96, &cpu::inst97, &cpu::inst98, &cpu::inst99, 
+&cpu::inst9A, &cpu::inst9B, &cpu::inst9C, &cpu::inst9D, &cpu::inst9E, &cpu::inst9F, &cpu::instA0, 
+&cpu::instA1, &cpu::instA2, &cpu::instA3, &cpu::instA4, &cpu::instA5, &cpu::instA6, &cpu::instA7, 
+&cpu::instA8, &cpu::instA9, &cpu::instAA, &cpu::instAB, &cpu::instAC, &cpu::instAD, &cpu::instAE, 
+&cpu::instAF, &cpu::instB0, &cpu::instB1, &cpu::instB2, &cpu::instB3, &cpu::instB4, &cpu::instB5, 
+&cpu::instB6, &cpu::instB7, &cpu::instB8, &cpu::instB9, &cpu::instBA, &cpu::instBB, &cpu::instBC, 
+&cpu::instBD, &cpu::instBE, &cpu::instBF, &cpu::instC0, &cpu::instC1, &cpu::instC2, &cpu::instC3, 
+&cpu::instC4, &cpu::instC5, &cpu::instC6, &cpu::instC7, &cpu::instC8, &cpu::instC9, &cpu::instCA, 
+&cpu::instCB, &cpu::instCC, &cpu::instCD, &cpu::instCE, &cpu::instCF, &cpu::instD0, &cpu::instD1, 
+&cpu::instD2, &cpu::instD3, &cpu::instD4, &cpu::instD5, &cpu::instD6, &cpu::instD7, &cpu::instD8, 
+&cpu::instD9, &cpu::instDA, &cpu::instDB, &cpu::instDC, &cpu::instDD, &cpu::instDE, &cpu::instDF, 
+&cpu::instE0, &cpu::instE1, &cpu::instE2, &cpu::instE3, &cpu::instE4, &cpu::instE5, &cpu::instE6, 
+&cpu::instE7, &cpu::instE8, &cpu::instE9, &cpu::instEA, &cpu::instEB, &cpu::instEC, &cpu::instED, 
+&cpu::instEE, &cpu::instEF, &cpu::instF0, &cpu::instF1, &cpu::instF2, &cpu::instF3, &cpu::instF4, 
+&cpu::instF5, &cpu::instF6, &cpu::instF7, &cpu::instF8, &cpu::instF9, &cpu::instFA, &cpu::instFB, 
+&cpu::instFC, &cpu::instFD, &cpu::instFE, &cpu::instFF };
+
+
+rom.open("src/rom.gb", std::ios::in | std::ios::binary);
+
+rom.seekg(0, rom.end);
+unsigned int length = rom.tellg();
+rom.seekg(0, rom.beg);
+
+if(length < 0x8000) //32 KByte
+	rom.read((char*)memory, length);
+else
+	rom.read((char*)memory, 0x8000);
+
 }
 
 cpu::~cpu(){
-delete[] memory;
+	delete[] memory;
+	rom.close();
+	delete[] opcode_array;
 }
 
+	
 //*********generic cpu::instructions*********************************************
 
 uint8_t cpu::NOP(){ return 4; }
@@ -208,8 +260,10 @@ uint8_t cpu::RRA(){
 }
 
 uint8_t cpu::JR_NZ_r8(){
-	if(F & ZERO_FLAG)
+	if(F & ZERO_FLAG){
+		++PC;
 		return 8;
+	}
 	else{
 		PC+=memory[PC]+1;
 		return 12;
@@ -244,8 +298,10 @@ uint8_t cpu::DAA(){
 
 
 uint8_t cpu::JR_Z_r8(){
-	if((F & ZERO_FLAG)==0)
+	if((F & ZERO_FLAG)==0){
+		++PC;
 		return 8;
+	}
 	else{
 		PC+=memory[PC]+1;
 		return 12;
@@ -273,8 +329,10 @@ uint8_t cpu::CPL(){
 
 	
 uint8_t cpu::JR_NC_r8(){
-	if(F & CARRY_FLAG)
+	if(F & CARRY_FLAG){
+		++PC;
 		return 8;
+	}
 	else{
 		PC+=memory[PC]+1;
 		return 12;
@@ -349,8 +407,10 @@ uint8_t cpu::SCF(){
 }
 
 uint8_t cpu::JR_C_r8(){
-	if((F & CARRY_FLAG)==0)
+	if((F & CARRY_FLAG)==0){
+		++PC;
 		return 8;
+	}
 	else{
 		PC+=memory[PC]+1;
 		return 12;
@@ -969,10 +1029,12 @@ uint8_t cpu::JP_HLADDR(){
 
 //TODO
 uint8_t cpu::PREFIX_CB(){
+++PC;
 return 8;
 }
 
 uint8_t cpu::CALL_Z(){
+
 	uint8_t tmpl = memory[++PC];
 	uint8_t tmph = memory[++PC];
 	if((F & ZERO_FLAG)==0)
@@ -1270,7 +1332,7 @@ uint8_t cpu::RRC_HLADDR(){
 		memory[HL] |= 1 << 7;
 	
 
-	if(reg == 0)
+	if(memory[HL] == 0)
 		F |= ZERO_FLAG;
 	else
 		F &= ~ZERO_FLAG;
@@ -1458,8 +1520,8 @@ uint8_t cpu::SRA(uint8_t &reg){
 
 uint8_t cpu::SRA_HLADDR(){
 
-	uint8_t bit = (reg & 1 << 7)? 1:0;
 	uint8_t tmp = memory[HL];
+	uint8_t bit = (tmp & 1 << 7)? 1:0;
 
 	if(tmp  & 1 << 0)
 		F |= CARRY_FLAG;
