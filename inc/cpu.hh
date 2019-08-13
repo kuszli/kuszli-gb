@@ -3,6 +3,7 @@
 
 
 #include<iostream>
+#include<fstream>
 #include<cstdint>
 
 
@@ -17,40 +18,13 @@
 #define CARRY_FLAG (1<<4)
 
 
+
 enum state{
 	running,
 	halted,
 	stopped,
 };
 
-
-enum param_type{
-	noparam,
-	eu8,
-	cu8,
-	eu8eu8,
-	eu8cu8,
-	cu16,
-};
-
-enum params{
-	a,
-	b,
-	c,
-	d,
-	e,
-	f,
-	h,
-	l,
-	a_f,
-	b_c,
-	d_e,
-	h_l,
-	af,
-	bc,
-	de,
-	hl,
-};
 
 
 
@@ -70,6 +44,8 @@ carry flag (4 most significant bits)
 	uint16_t SP, PC;
 
 	uint8_t* memory;
+
+	std::fstream rom;
 
 	state _state;
 
@@ -330,7 +306,11 @@ public:
 
 	cpu();
 	~cpu();
-
+	//uint8_t (cpu::**opcode_array)();
+	uint8_t (cpu::**opcode_array)();
+	
+	uint8_t decode(){return memory[PC++];}
+	uint8_t execute(const uint8_t opcode){return (this->*opcode_array[opcode])();} 
 
 //*********cpu intructions***************************************************
 
