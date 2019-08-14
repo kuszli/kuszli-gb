@@ -49,7 +49,7 @@ carry flag (4 most significant bits)
 
 	state _state;
 
-	bool interrupts_enabled;
+	bool IME; //Interrupt Master Enable
 
 
 
@@ -831,6 +831,8 @@ public:
 	~cpu();
 	uint8_t decode(){return memory[PC++];}
 	uint8_t execute(const uint8_t opcode){return (this->*opcode_array[opcode])();} 
+	uint8_t** regs;
+	uint16_t** regs16;
 
 };
 
