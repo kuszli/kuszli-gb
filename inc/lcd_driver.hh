@@ -2,7 +2,9 @@
 #define lcd_driverh
 
 #include<cstdint>
+#include<iostream>
 #include "defines.h"
+#include "memory.hh"
 
 #define LCD_REGS_MEMORY_ADDR 0xFF40
 
@@ -22,6 +24,12 @@
 #define OAM_SIZE 0xA0
 
 
+struct pixel{
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
+};
+
 enum interrupt_type{
 	vblank,
 	mode_x,
@@ -38,6 +46,12 @@ class lcd_driver{
 
 	uint8_t* lcd_registers;
 	uint8_t* IF;
+	uint8_t* vram1;
+	uint8_t* vram2;
+	uint8_t* chr_code1;
+	uint8_t* chr_code2;
+	uint8_t* line_buffer;
+	uint8_t** screen_buffer;
 
 	uint16_t mode_counter[4] = {0};
 	uint16_t mode_cycles[4] = {80, 172, 204, 4560};
@@ -47,16 +61,23 @@ class lcd_driver{
 	uint8_t mode;
 	uint16_t LY_counter;
 
+
 	void generate_interrupt(interrupt_type t);
 	void inc_LY();
 	void switch_mode();
 
+	uint16_t get_bg_origin();
+	
+	void draw_line();
+	void draw_blank_line();
 
 public:
 
-	lcd_driver(uint8_t* mem);
+	lcd_driver(_memory& mem);
+	~lcd_driver();
 	void update(const uint8_t cycles);
 	uint8_t debug(){ return lcd_registers[LY]; }
+	uint8_t** const screen(){ return screen_buffer; }
 
 
 };

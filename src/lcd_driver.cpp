@@ -1,12 +1,86 @@
 #include "lcd_driver.hh"
 
-lcd_driver::lcd_driver(uint8_t* mem){
+lcd_driver::lcd_driver(_memory& mem){
 	lcd_registers = &mem[LCD_REGS_MEMORY_ADDR];
 	IF = &mem[IF_REGISTER];
+
+	vram1 = &mem[0x8000];
+	vram2 = &mem[0x9000];
+	chr_code1 = &mem[0x9800];
+	chr_code2 = &mem[0x9C00];
+
 	lcd_registers[STAT] |= mode_flags[0];
 	mode = 0;
 	LY_counter = 0;
+	line_buffer = new uint8_t[160];
+	screen_buffer = new uint8_t*[144];
+
+	for(int i = 0; i < 144; ++i){
+		screen_buffer[i] = new uint8_t[160];
+	}
 }
+
+
+lcd_driver::~lcd_driver(){
+	delete[] line_buffer;
+	delete[] screen_buffer;
+}
+
+void lcd_driver::draw_blank_line(){
+	for(int i = 0; i < 160; ++i){
+		screen_buffer[lcd_registers[LY]][i] = 0;
+	}
+}
+
+	
+void lcd_driver::draw_line(){
+
+
+
+	if(!(lcd_registers[LCDC] & 1 << 7)){
+		draw_blank_line();
+		return;
+	}
+
+	bool sign;
+	uint8_t* bg_tile_data;
+
+	if(lcd_registers[LCDC] & 1 << 4){
+		bg_tile_data = vram1;
+		sign = false;
+	}
+	else{
+		bg_tile_data = vram2;
+		sign = true;	
+	}
+
+	uint8_t* bg_tile_nums = (lcd_registers[LCDC] & 1 << 3) ? chr_code2 : chr_code1;
+	uint16_t block = (lcd_registers[SCY]/8 + lcd_registers[LY]/8) * 32 + lcd_registers[SCX]/8;
+	uint16_t row = (block/32 + 1)*32;
+	uint8_t line = lcd_registers[LY] % 8;
+	uint8_t* block_line_data;
+	uint8_t colorA,colorB; //color bits
+		
+	for(int i = 0; i < 20; ++i){
+		if(sign)
+			block_line_data = &bg_tile_data[(int16_t)(bg_tile_nums[block] *16 + line * 2)];
+		
+		else
+			block_line_data = &bg_tile_data[bg_tile_nums[block] *16 + line * 2];
+
+		for(int j = 0; j < 8; ++j){
+			colorA = (block_line_data[0] & 1 << (7-j)) ? 1 : 0;
+			colorB = (block_line_data[1] & 1 << (7-j)) ? 2 : 0;		
+			screen_buffer[lcd_registers[LY]][i*8 + j] = colorB | colorA;
+		}
+		++block;
+		block = block % row;
+		
+	}
+
+}
+		
+			
 
 
 
@@ -46,26 +120,50 @@ void lcd_driver::inc_LY(){
 
 void lcd_driver::switch_mode(){
 
-	if(mode == 2){
-			inc_LY();
-			if(lcd_registers[LY] == scanlines_until_vblank){ //vblank
-				mode = 3;
-				generate_interrupt(vblank);
-			}
-			else
-				mode = 0; 
+
+	switch(mode){
+
+		case 0:{
+			draw_line();
+			mode = 1; //drawing
+			break;
 		}
 
-	else{
-		mode == 3 ? mode = 0 : ++mode; //switch to next mode
-		generate_interrupt(mode_x);	
+		case 1:{
+			mode = 2; //hblank
+			generate_interrupt(mode_x);
+			break;
+		}
+
+		case 2:{
+			inc_LY();
+			if(lcd_registers[LY] == scanlines_until_vblank){ //vblank time!
+				mode = 3; 
+				generate_interrupt(vblank);
+				generate_interrupt(mode_x);
+			}
+			else
+				mode = 0; //nope, it's not vblank yet
+			break;
+		}
+
+		case 3:{
+			inc_LY();
+			mode = 0;
+			generate_interrupt(mode_x);
+			break;
+		}
+		
+		default: 
+			break;
+
 	}
 
 	lcd_registers[STAT] |= mode_flags[mode];
-
+	
 }
 
-	
+
 
 void lcd_driver::update(uint8_t cycles){
 
@@ -80,16 +178,20 @@ void lcd_driver::update(uint8_t cycles){
 
 
 	switch(mode){
-		case 3:{
 
+
+		case 3:{
+			//std::cout << (int)lcd_registers[LY] << std::endl;
 			LY_counter += cycles;
 			if(LY_counter >= cycles_per_scanline){
 				inc_LY();
 				LY_counter = 0;
 			}
+			break;
 		}
 		
-		default: ;
+		default:
+			break;
 	}
 			
 }
