@@ -4,17 +4,16 @@
 #include<cstdint>
 #include<iostream>
 #include<fstream>
+#include<queue>
+#include<functional>
+
 #include "defines.h"
 #include "memory.hh"
+#include "compare.hh"
 
 #define LCD_REGS_MEMORY_ADDR 0xFF40
 
 
-struct pixel{
-	uint8_t r;
-	uint8_t g;
-	uint8_t b;
-};
 
 enum interrupt_type{
 	vblank,
@@ -30,14 +29,18 @@ class lcd_driver{
 	const uint8_t LYC_match_flag = 1 << 2;
 	const uint8_t LYC_interrupt_select = 1 << 6;
 
+	bool oam_search_done;
 	uint8_t* lcd_registers;
 	uint8_t* IF;
 	uint8_t* vram1;
 	uint8_t* vram2;
 	uint8_t* chr_code1;
 	uint8_t* chr_code2;
+	uint8_t* oam;
 	uint8_t* line_buffer;
 	uint8_t** screen_buffer;
+	std::vector<uint8_t>* sprites_cont;
+	std::priority_queue<uint8_t, std::vector<uint8_t>, compare>* visible_sprites;
 
 	uint16_t mode_counter[4] = {0};
 	uint16_t mode_cycles[4] = {80, 172, 204, 4560};
@@ -52,10 +55,15 @@ class lcd_driver{
 	void inc_LY();
 	void switch_mode();
 
-	uint16_t get_bg_origin();
+	uint8_t find_common_line(const uint8_t oam_index);
 	
-	void draw_line();
 	void draw_blank_line();
+	void draw_line();
+	void draw_sprite_line(const uint8_t oam_idx, const uint8_t* block_line_data, const uint8_t block);
+	void draw_bg_line(const uint8_t* block_line_data, const uint8_t block);
+	void search_oam();
+	
+//	bool compare(uint8_t A, uint8_t B){ return oam[4*A+1] > oam[4*B+1]; }
 
 public:
 

@@ -5,7 +5,9 @@
 #include<cstring>
 #include "memory.hh"
 #include "defines.h"
+#include<iostream>
 
+#define DMA_ADDR 0xFF46
 
 class dma{
 

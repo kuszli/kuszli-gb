@@ -1,4 +1,5 @@
 #define IF_REGISTER 0xFF0F
+#define IE_REGISTER 0xFFFF
 
 #define VBLANK_INT (1 << 0)
 #define LCD_STAT_INT (1 << 1)

@@ -3,27 +3,18 @@
 #include "opcodes_init_list.h"
 
 
-cpu::cpu(){
-memory = new uint8_t[65536];
+cpu::cpu(_memory& mem){
+memory = mem;
 IME = false;
-PC = 0;
+_state = running;
 
 opcode_array = new (uint8_t (cpu::*[256])()){ OP_ARRAY };
 
 CB_array = new (uint8_t (cpu::*[256])()){ CB_ARRAY };
 
-
-rom.open("src/rom.gb", std::ios::in | std::ios::binary);
-
-rom.seekg(0, rom.end);
-unsigned int length = rom.tellg();
-rom.seekg(0, rom.beg);
-
-if(length < 0x8000) //32 KByte
-	rom.read((char*)memory, length);
-else
-	rom.read((char*)memory, 0x8000);
-
+PC = 0x100;
+SP = 0xFFFE;
+memory[0xFF40] = 0x91;
 
 regs = new uint8_t*[8]{&A,&F,&B,&C,&D,&E,&H,&L};
 regs16 = new uint16_t*[2]{&SP,&PC};
@@ -32,10 +23,39 @@ regs16 = new uint16_t*[2]{&SP,&PC};
 }
 
 cpu::~cpu(){
-	delete[] memory;
-	rom.close();
 	delete[] opcode_array;
 	delete[] CB_array;
+}
+
+void cpu::handle_interrupts(uint8_t id){
+
+	if(id == 0xFF)
+		return;
+	
+	if(_state == halted)
+		_state = running;
+
+
+	if(IME == true){
+
+		memory.write(IF_REGISTER, memory[IF_REGISTER] & ~(1 << id));
+		IME = false;
+		memory.write(--SP, PC >> 8);
+		memory.write(--SP, PC & 0xFF); 
+		PC = interrupt_address[id];
+	}
+	
+		
+}
+
+
+uint8_t cpu::decode(){
+
+	if(_state == halted)
+		return 4;
+	
+	else
+		return memory[PC++];
 }
 
 	
@@ -56,7 +76,7 @@ uint8_t cpu::LD_REG8_d8(uint8_t &reg){
 
 
 uint8_t cpu::LD_REG16_A(const uint16_t reg){
-	memory[reg] = A;
+	memory.write(reg, A);
 	return 8;
 }
 
@@ -116,7 +136,7 @@ uint8_t cpu::RLCA(){
 	else
 		F &= ~CARRY_FLAG;
 
-//shift left by 1 byte and set new bit 0 to old bit 7
+//shift left 1 bit and set new bit 0 to old bit 7
 	A = (A << 1) | ((A & 1<<7)>>7);
 
 	F &= ~ZERO_FLAG;
@@ -129,8 +149,8 @@ uint8_t cpu::LD_a16_SP(){
 	uint8_t low = memory[PC++];
 	uint8_t high = memory[PC++];
 	uint16_t addr = (high << 8) | low;
-	memory[addr] = SP & 0xFF;
-	memory[addr+1] = SP >> 8;
+	memory.write(addr, SP & 0xFF); 
+	memory.write(addr+1, SP >> 8); 
 	return 20;
 }
 
@@ -142,7 +162,7 @@ uint8_t cpu::ADD_HL_REG16(const uint16_t reg){
 	else 
 		F &= ~CARRY_FLAG;
 
-	if( ((HL & 0xFFF) + (reg & 0xFFF)) & 1<<12)
+	if( ((HL & 0x0FFF) + (reg & 0x0FFF)) & 1<<12)
 		F |= HALF_CARRY_FLAG;
 	else 
 		F &= ~HALF_CARRY_FLAG;
@@ -168,7 +188,7 @@ uint8_t cpu::RRCA(){
 	else
 		F &= ~CARRY_FLAG;
 
-//shift right by 1 byte and set new bit 7 to old bit 0
+//shift right 1 bit and set new bit 7 to old bit 0
 	A = (A >> 1) | ((A & 1<<0)<<7);
 
 	F &= ~ZERO_FLAG;
@@ -178,11 +198,12 @@ uint8_t cpu::RRCA(){
 }
 
 uint8_t cpu::STOP(){
-// to do
+	//_state = stopped;
+	return 4;
 }
 
 uint8_t cpu::LD_ADDR_A(const uint16_t reg_addr){
-	memory[reg_addr] = A;
+	memory.write(reg_addr, A);
 	return 8;
 }
 
@@ -206,7 +227,7 @@ uint8_t cpu::RLA(){
 }
 
 uint8_t cpu::JR_r8(){
-	PC+=(int8_t)memory[PC]+1;
+	PC+=(int8_t)memory[PC] + 1;
 	return 12;
 }
 
@@ -238,31 +259,50 @@ uint8_t cpu::JR_NZ_r8(){
 		return 8;
 	}
 	else{
-		PC+=(int8_t)memory[PC]+1;
+		PC+=(int8_t)memory[PC] + 1;
 		return 12;
 	}
 }
 
 uint8_t cpu::LD_HLINC_A(){
-	memory[HL] = A;
+	memory.write(HL, A);
 	INC_REG16(H,L); //this might need some workaround
 	return 8;
 }
 
 uint8_t cpu::LD_HLDEC_A(){
-	memory[HL] = A;
+	memory.write(HL, A);
 	DEC_REG16(H,L); //this might need some workaround
 	return 8;
 }
 
 uint8_t cpu::DAA(){
-	uint8_t value_to_add = 0;
+	int8_t value_to_add = 0;
 	
-	if( (A & 0xF) > 0x9)
-		value_to_add |= 0x6;
-	else if(A > 0x99)
-		value_to_add |= 0x60;
+	if(!(F & SUBTRACT_FLAG)){ //last operation was an addition
+		if( ((A & 0xF0) > 0x90) || (F & CARRY_FLAG) || (((A & 0xF0) >= 0x90) && ((A & 0xF) > 0x9)) ){
+			value_to_add |= 0x60;
+			F |= CARRY_FLAG;
+		}
+		if( ((A & 0xF) > 0x9) || (F & HALF_CARRY_FLAG) )
+			value_to_add |= 0x6;
+	}
 
+	else{ //last operation was a subtraction
+		if(F & HALF_CARRY_FLAG)
+			value_to_add -= 0x6;
+		if(F & CARRY_FLAG)
+			value_to_add -= 0x60;
+	}
+
+	A += value_to_add;
+
+	if(A == 0)
+		F |= ZERO_FLAG;
+	else
+		F &= ~ZERO_FLAG;
+
+	F &= ~HALF_CARRY_FLAG;
 	return 4; 
 
 }
@@ -276,7 +316,7 @@ uint8_t cpu::JR_Z_r8(){
 		return 8;
 	}
 	else{
-		PC+=(int8_t)memory[PC]+1;
+		PC+=(int8_t)memory[PC] + 1;
 		return 12;
 	}
 }
@@ -307,7 +347,7 @@ uint8_t cpu::JR_NC_r8(){
 		return 8;
 	}
 	else{
-		PC+=(int8_t)memory[PC]+1;
+		PC+=(int8_t)memory[PC] + 1;
 		return 12;
 	}
 }
@@ -368,7 +408,7 @@ uint8_t cpu::DEC_HLADDR(){
 
 
 uint8_t cpu::LD_HLADDR_d8(){
-	memory[HL] = memory[PC++];
+	memory.write(HL, memory[PC++]);
 	return 12;
 }
 
@@ -385,7 +425,7 @@ uint8_t cpu::JR_C_r8(){
 		return 8;
 	}
 	else{
-		PC+=(int8_t)memory[PC]+1;
+		PC+=(int8_t)memory[PC] + 1;
 		return 12;
 	}
 }
@@ -408,7 +448,7 @@ uint8_t cpu::LD_REG8_REG8(uint8_t &reg1, const uint8_t reg2){
 
 
 uint8_t cpu::LD_HLADDR_REG8(const uint8_t reg){
-	memory[HL] = reg;
+	memory.write(HL, reg);
 	return 8;
 }
 
@@ -417,7 +457,14 @@ uint8_t cpu::LD_REG8_HLADDR(uint8_t &reg){
 	return 8;
 }
 
-uint8_t cpu::HALT(){}
+uint8_t cpu::HALT(){
+	if( (memory[IE_REGISTER] & memory[IF_REGISTER]) & 0x1F)
+		--PC;
+	else
+		_state = halted;
+
+	return 4;
+}
 
 uint8_t cpu::ADD_A_REG8(const uint8_t reg){
 	uint16_t res = A+reg;
@@ -479,7 +526,7 @@ uint8_t cpu::ADC_A_REG8(const uint8_t reg){
 	if(res & 1 << 8)
 		F |= CARRY_FLAG;
 	else
-		F &= CARRY_FLAG;
+		F &= ~CARRY_FLAG;
 
 	A+=reg+flag;
 
@@ -506,7 +553,7 @@ uint8_t cpu::ADC_A_HLADDR(){
 	if(res & 1 << 8)
 		F |= CARRY_FLAG;
 	else
-		F &= CARRY_FLAG;
+		F &= ~CARRY_FLAG;
 
 	A+=memory[HL]+flag;
 
@@ -579,7 +626,7 @@ uint8_t cpu::SBC_REG8(const uint8_t reg){
 	else
 		F &= ~CARRY_FLAG;
 
-	if((reg + flag & 0xF) > (A & 0xF))
+	if((reg & 0xF) + flag > (A & 0xF))
 		F |= HALF_CARRY_FLAG;
 	else
 		F &= ~HALF_CARRY_FLAG;	
@@ -606,7 +653,7 @@ uint8_t cpu::SBC_HLADDR(){
 	else
 		F &= ~CARRY_FLAG;
 
-	if((memory[HL] + flag & 0xF) > (A & 0xF))
+	if((memory[HL] & 0xF) + flag > (A & 0xF))
 		F |= HALF_CARRY_FLAG;
 	else
 		F &= ~HALF_CARRY_FLAG;	
@@ -630,7 +677,10 @@ uint8_t cpu::AND_REG8(const uint8_t reg){
 		F |= ZERO_FLAG;
 	else
 		F &= ~ZERO_FLAG;
+
 	F |= HALF_CARRY_FLAG;
+	F &= ~SUBTRACT_FLAG;
+	F &= ~CARRY_FLAG;
 
 	return 4;
 }
@@ -642,7 +692,10 @@ uint8_t cpu::AND_HLADDR(){
 		F |= ZERO_FLAG;
 	else
 		F &= ~ZERO_FLAG;
+
 	F |= HALF_CARRY_FLAG;
+	F &= ~SUBTRACT_FLAG;
+	F &= ~CARRY_FLAG;
 
 	return 8;
 }
@@ -783,6 +836,7 @@ uint8_t cpu::RET_NC(){
 uint8_t cpu::POP(uint8_t &reg_high, uint8_t &reg_low){
 	reg_low = memory[SP++];
 	reg_high = memory[SP++];
+	F &= 0xF0;
 	return 12;
 }
 
@@ -823,9 +877,9 @@ uint8_t cpu::CALL_NZ(){
 	if(F & ZERO_FLAG)
 		return 12;
 	else{
-		uint16_t pctmp = PC+1;
-		memory[--SP] = (pctmp >> 8);
-		memory[--SP] = (pctmp & 0xFF);
+		uint16_t pctmp = PC;//+1;
+		memory.write(--SP, pctmp >> 8);
+		memory.write(--SP, pctmp & 0xFF);
 		PC = (tmph << 8) | tmpl;
 		return 24;
 	}
@@ -838,9 +892,9 @@ uint8_t cpu::CALL_NC(){
 	if(F & CARRY_FLAG)
 		return 12;
 	else{
-		uint16_t pctmp = PC+1;
-		memory[--SP] = (pctmp >> 8);
-		memory[--SP] = (pctmp & 0xFF);
+		uint16_t pctmp = PC;//+1;
+		memory.write(--SP, pctmp >> 8);
+		memory.write(--SP, pctmp & 0xFF);
 		PC = (tmph << 8) | tmpl;
 		return 24;
 	}
@@ -848,11 +902,16 @@ uint8_t cpu::CALL_NC(){
 }
 
 uint8_t cpu::PUSH(const uint16_t reg){
-	memory[--SP] = (reg >> 8);
-	memory[--SP] = (reg & 0xFF);
+	memory.write(--SP, reg >> 8);
+	memory.write(--SP, reg & 0xFF);
 	return 16;
 }
 
+uint8_t cpu::PUSH2(uint8_t a, uint8_t b){
+	memory.write(--SP, a);
+	memory.write(--SP, b);
+	return 16;
+}
 
 uint8_t cpu::ADD_A_d8(){
 	uint8_t tmp = memory[PC++];
@@ -911,6 +970,8 @@ uint8_t cpu::AND_A_d8(){
 		F &= ~ZERO_FLAG;
 
 	F |= HALF_CARRY_FLAG;
+	F &= ~SUBTRACT_FLAG;
+	F &= ~CARRY_FLAG;
 
 	return 8;
 }
@@ -1000,9 +1061,10 @@ uint8_t cpu::JP_HLADDR(){
 	return 4;
 }
 
-//TODO
+
 uint8_t cpu::PREFIX_CB(){
-return (this->*CB_array[PC++])();
+return (this->*CB_array[memory[PC++]])();
+
 }
 
 uint8_t cpu::CALL_Z(){
@@ -1012,9 +1074,9 @@ uint8_t cpu::CALL_Z(){
 	if((F & ZERO_FLAG)==0)
 		return 12;
 	else{
-		uint16_t pctmp = PC+1;
-		memory[--SP] = (pctmp >> 8);
-		memory[--SP] = (pctmp & 0xFF);
+		uint16_t pctmp = PC;//+1;
+		memory.write(--SP, pctmp >> 8);
+		memory.write(--SP, pctmp & 0xFF);
 		PC = (tmph << 8) | tmpl;
 		return 24;
 	}
@@ -1027,9 +1089,9 @@ uint8_t cpu::CALL_C(){
 	if((F & CARRY_FLAG)==0)
 		return 12;
 	else{
-		uint16_t pctmp = PC+1;
-		memory[--SP] = (pctmp >> 8);
-		memory[--SP] = (pctmp & 0xFF);
+		uint16_t pctmp = PC;//+1;
+		memory.write(--SP, pctmp >> 8);
+		memory.write(--SP, pctmp & 0xFF);
 		PC = (tmph << 8) | tmpl;
 		return 24;
 	}
@@ -1040,8 +1102,8 @@ uint8_t cpu::CALL(){
 	uint8_t tmph = memory[PC++];
 
 	uint16_t pctmp = PC;
-	memory[--SP] = (pctmp >> 8);
-	memory[--SP] = (pctmp & 0xFF);
+	memory.write(--SP, pctmp >> 8);
+	memory.write(--SP, pctmp & 0xFF);
 	PC = (tmph << 8) | tmpl;
 	return 24;
 }
@@ -1060,7 +1122,7 @@ uint8_t cpu::ADC_A_d8(){
 	if(res & 1 << 8)
 		F |= CARRY_FLAG;
 	else
-		F &= CARRY_FLAG;
+		F &= ~CARRY_FLAG;
 
 	A+=val+flag;
 
@@ -1084,7 +1146,7 @@ uint8_t cpu::SBC_A_d8(){
 	else
 		F &= ~CARRY_FLAG;
 
-	if((val + flag & 0xF) > (A & 0xF))
+	if((val & 0xF)+flag > (A & 0xF))
 		F |= HALF_CARRY_FLAG;
 	else
 		F &= ~HALF_CARRY_FLAG;	
@@ -1143,7 +1205,7 @@ uint8_t cpu::CP_A_d8(){
 
 uint8_t cpu::LDH_a8_A(){
 	uint8_t val = memory[PC++];
-	memory[0xFF00 + val] = A;
+	memory.write(0xFF00 + val, A);
 	return 12;
 }
 
@@ -1155,7 +1217,7 @@ uint8_t cpu::LDH_A_a8(){
 
 
 uint8_t cpu::LD_FFC_A(){
-	memory[0xFF00 + C] = A;
+	memory.write(0xFF00 + C, A);
 	return 8;
 }
 
@@ -1171,17 +1233,19 @@ uint8_t cpu::DI(){
 
 uint8_t cpu::ADD_SP_r8(){
 	uint8_t val = memory[PC++];
-	if(((SP & 0xFFF) + val) & 1<<12)
+	if( ((SP & 0xF) + (val & 0xF)) & 1 << 4)
 		F |= HALF_CARRY_FLAG;
 	else
 		F &= ~HALF_CARRY_FLAG;
-	uint32_t res = SP+val;
-	if(res & 1<<16)
+
+	uint16_t res = (SP & 0xFF) + val;
+
+	if(res & 1 << 8)
 		F |= CARRY_FLAG;
 	else
 		F &= ~CARRY_FLAG;
 	
-	SP+=val;
+	SP += (int8_t)val;
 
 	F &= ~ZERO_FLAG;
 	F &= ~SUBTRACT_FLAG;
@@ -1189,9 +1253,11 @@ uint8_t cpu::ADD_SP_r8(){
 }
 
 uint8_t cpu::LD_HL_SPr8(){
+	uint16_t SP_tmp = SP;
 	ADD_SP_r8();
 	H = ((SP & 0xFF00)>>8);
 	L = (SP & 0xFF);
+	SP = SP_tmp;
 	return 12;
 }
 
@@ -1203,7 +1269,7 @@ uint8_t cpu::LD_SP_HL(){
 uint8_t cpu::LD_ADDR_A(){
 	uint8_t tmpl = memory[PC++];
 	uint8_t tmph = memory[PC++];
-	memory[(tmph << 8) | tmpl] = A;
+	memory.write((tmph << 8) | tmpl, A);
 	return 16;
 }
 
@@ -1233,6 +1299,7 @@ uint8_t cpu::RLC(uint8_t &reg){
 		F &= ~CARRY_FLAG;
 
 	reg = (reg << 1);
+
 	if(F & CARRY_FLAG)
 		reg |= 1 << 0;
 	
@@ -1254,14 +1321,14 @@ uint8_t cpu::RLC_HLADDR(){
 
 	uint8_t tmp = memory[HL];
 
-	if(tmp  & 1 <<7)
+	if(tmp  & 1 << 7)
 		F |= CARRY_FLAG;
 	else
 		F &= ~CARRY_FLAG;
 
-	memory[HL] = (tmp << 1);
+	memory.write(HL, tmp << 1);
 	if(F & CARRY_FLAG)
-		memory[HL] |= 1 << 0;
+		memory.write(HL, memory[HL] | 1 << 0);
 
 	if(memory[HL] == 0)
 		F |= ZERO_FLAG;
@@ -1308,9 +1375,9 @@ uint8_t cpu::RRC_HLADDR(){
 	else
 		F &= ~CARRY_FLAG;
 
-	memory[HL] = (tmp >> 1);
+	memory.write(HL, tmp >> 1);
 	if(F & CARRY_FLAG)
-		memory[HL] |= 1 << 7;
+		memory.write(HL, memory[HL] | 1 << 7);
 	
 
 	if(memory[HL] == 0)
@@ -1361,9 +1428,9 @@ uint8_t cpu::RL_HLADDR(){
 	else
 		F &= ~CARRY_FLAG;
 
-	memory[HL] = (tmp << 1);
+	memory.write(HL, tmp << 1);
 	if(bit == 1)
-		memory[HL] |= 1 << 0;
+		memory.write(HL, memory[HL] | 1 << 0);
 
 	if(memory[HL] == 0)
 		F |= ZERO_FLAG;
@@ -1415,9 +1482,9 @@ uint8_t cpu::RR_HLADDR(){
 	else
 		F &= ~CARRY_FLAG;
 
-	memory[HL] = (tmp >> 1);
+	memory.write(HL, tmp >> 1);
 	if(bit == 1)
-		memory[HL] |= 1 << 7;
+		memory.write(HL, memory[HL] | 1 << 7);
 
 	if(memory[HL] == 0)
 		F |= ZERO_FLAG;
@@ -1461,7 +1528,7 @@ uint8_t cpu::SLA_HLADDR(){
 	else
 		F &= ~CARRY_FLAG;
 
-	memory[HL] = (tmp << 1);
+	memory.write(HL, tmp << 1);
 
 	if(memory[HL] == 0)
 		F |= ZERO_FLAG;
@@ -1509,9 +1576,9 @@ uint8_t cpu::SRA_HLADDR(){
 	else
 		F &= ~CARRY_FLAG;
 
-	memory[HL] = (tmp >> 1);
+	memory.write(HL, tmp >> 1);
 	if(bit == 1)
-		memory[HL] |= (1 << 7);
+		memory.write(HL, memory[HL] | (1 << 7));
 
 	if(memory[HL] == 0)
 		F |= ZERO_FLAG;
@@ -1547,7 +1614,7 @@ uint8_t cpu::SWAP_HLADDR(){
 
 	uint8_t tmpl = memory[HL] & 0xF;
 	uint8_t tmph = memory[HL] & 0xF0;
-	memory[HL] = (tmpl << 4) | (tmph >> 4);
+	memory.write(HL, (tmpl << 4) | (tmph >> 4));
 
 	if(memory[HL] == 0)
 		F |= ZERO_FLAG;
@@ -1592,7 +1659,7 @@ uint8_t cpu::SRL_HLADDR(){
 	else
 		F &= ~CARRY_FLAG;
 
-	memory[HL] = (tmp >> 1);
+	memory.write(HL, tmp >> 1);
 
 	if(memory[HL] == 0)
 		F |= ZERO_FLAG;
@@ -1641,7 +1708,7 @@ uint8_t cpu::RES(const uint8_t bit, uint8_t &reg){
 
 	
 uint8_t cpu::RES_HLADDR(const uint8_t bit){
-	memory[HL] &= ~(1 << bit);
+	memory.write(HL, memory[HL] & ~(1 << bit));
 	return 16;
 }
 
@@ -1651,7 +1718,7 @@ uint8_t cpu::SET(const uint8_t bit, uint8_t &reg){
 }
 	
 uint8_t cpu::SET_HLADDR(const uint8_t bit){
-	memory[HL] |= (1 << bit);
+	memory.write(HL, memory[HL] | (1 << bit));
 	return 16;
 }
 
@@ -1816,7 +1883,7 @@ return DEC_REG8(H);
 }
 
 uint8_t cpu::inst26(){
-LD_REG8_d8(H);
+return LD_REG8_d8(H);
 }
 
 uint8_t cpu::inst27(){

@@ -3,8 +3,9 @@
 
 
 #include<iostream>
-#include<fstream>
 #include<cstdint>
+#include "memory.hh"
+#include "defines.h"
 
 
 #define AF ((A << 8) | F)
@@ -43,18 +44,17 @@ carry flag (4 most significant bits)
 // 16 bit registers
 	uint16_t SP, PC;
 
-	uint8_t* memory;
-
-	std::fstream rom;
+	_memory memory;
 
 	state _state;
 
 	bool IME; //Interrupt Master Enable
-
-
+	
+	const uint8_t interrupt_address[5] = {0x40, 0x48, 0x50, 0x58, 0x60};
 
 
 //generic instructions*******************************************************
+	uint8_t PUSH2(uint8_t a, uint8_t b);
 
 	uint8_t NOP();
 
@@ -827,10 +827,11 @@ uint8_t (cpu::**CB_array)();
 	
 public:
 
-	cpu();
+	cpu(_memory& mem);
 	~cpu();
-	uint8_t decode(){return memory[PC++];}
+	uint8_t decode(); //{return memory[PC++];}
 	uint8_t execute(const uint8_t opcode){return (this->*opcode_array[opcode])();} 
+	void handle_interrupts(uint8_t addr);
 	uint8_t** regs;
 	uint16_t** regs16;
 

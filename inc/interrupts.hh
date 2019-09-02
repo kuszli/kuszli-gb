@@ -3,18 +3,17 @@
 
 #include<cstdint>
 #include "defines.h"
+#include "memory.hh"
 
-#define IE_REGISTER 0xFFFF
 
 
 class interrupts{
 	uint8_t* IF;
 	uint8_t* IE;
-	
 
 public:
 
-	interrupts(uint8_t* mem);
+	interrupts(_memory& mem);
 	uint8_t check();
 
 };

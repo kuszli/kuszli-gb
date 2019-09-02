@@ -2,17 +2,19 @@
 
 dma::dma(_memory &mem){
 	memory = mem;
-	dma_register = &mem[DMA];
+	dma_register = &mem[DMA_ADDR];
 	oam = &mem[OAM];
 	counter = 0;
 }
 
 void dma::transfer(){
+	
 	if(*dma_register < 0x80)
 		return;
-	else
+	else{
 		std::memmove((void*)oam, (void*)&memory[*dma_register * 0x100], OAM_SIZE);
-
+ 		
+	}
 }
 
 
