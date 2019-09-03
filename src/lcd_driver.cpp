@@ -33,6 +33,79 @@ lcd_driver::~lcd_driver(){
 	delete visible_sprites;
 }
 
+void lcd_driver::update_sprite(const uint8_t oam_idx, const uint8_t block){
+
+
+	sprite.size = lcd_registers[LCDC] & 1 << 2 ? 16 : 8;
+	sprite.sx = oam[oam_idx*4+1];
+	sprite.h_flip = oam[oam_idx*4 + 3] & 1 << 5 ? true : false;
+	sprite.v_flip = oam[oam_idx*4 + 3] & 1 << 6 ? true : false;
+
+	uint8_t common_line = find_common_line(oam_idx);
+
+	if(sprite.v_flip) 
+		common_line = sprite.size - 1 - common_line;
+
+	uint8_t line = common_line % 8;
+
+	if(sprite.size == 16){
+		if(common_line < 8)
+			sprite.tile = oam[oam_idx*4 + 2] & 0xFE;
+		else
+			sprite.tile = oam[oam_idx*4 + 2] | 0x1;
+	}
+	else
+		sprite.tile = oam[oam_idx*4 + 2];
+
+
+	sprite.palette = oam[oam_idx*4 + 3] & 1 << 4 ? &lcd_registers[OBP1] : &lcd_registers[OBP0];
+
+	sprite.tile_data = &vram1[sprite.tile * 16 + line * 2];
+	
+
+	if(sprite.sx - 8 <= block*8){
+		sprite.beg = 0;
+		sprite.end = sprite.sx - block*8;
+		sprite.offset = 8 - (sprite.sx - block*8);
+	}
+	else{
+		sprite.beg = sprite.sx - 8 - block*8;
+		sprite.end = 8;
+		sprite.offset = 0;
+	}
+
+
+}
+
+void inline lcd_driver::draw_pixel(const uint8_t* pal, const uint8_t color){
+	screen_buffer[lcd_registers[LY]][curr_px++] = (*pal & (0x3 << color * 2)) >> color*2;
+}
+
+
+uint8_t lcd_driver::get_color(const uint8_t* tile_data, const uint8_t px){
+	uint8_t colorA, colorB;
+
+	colorA = (tile_data[0] & 1 << (7-px)) ? 1 : 0;
+	colorB = (tile_data[1] & 1 << (7-px)) ? 2 : 0;
+
+	return (colorB | colorA);
+}
+
+
+uint8_t lcd_driver::get_color_rev(const uint8_t* tile_data, const uint8_t px){
+	uint8_t colorA, colorB;
+
+	colorA = (tile_data[0] & 1 << (px)) ? 1 : 0;
+	colorB = (tile_data[1] & 1 << (px)) ? 2 : 0;
+
+	return (colorB | colorA);
+}
+
+
+
+
+
+
 
 void lcd_driver::search_oam(){
 	if(!(lcd_registers[LCDC] & 1 << 1) || !(lcd_registers[LCDC] & 1 << 7)) // obj off or screen off
@@ -83,99 +156,76 @@ void lcd_driver::draw_blank_line(){
 	}
 }
 
-void lcd_driver::draw_sprite_line(const uint8_t oam_idx, const uint8_t* block_line_data, const uint8_t block){
-	if((oam[oam_idx*4+1] == 0) || (oam[oam_idx*4+1] >=160)){
+void lcd_driver::draw_sprite_line(const uint8_t oam_idx, const uint8_t* block_line_data, const uint8_t block, const uint8_t blocks_to_draw){
+
+	if((oam[oam_idx*4+1] == 0) || (oam[oam_idx*4+1] >=168)){
 		visible_sprites->pop();
 		return;
 	}
 
-	uint8_t common_line = find_common_line(oam_idx);
-	uint8_t sprite_size = lcd_registers[LCDC] & 1 << 2 ? 16 : 8;
-	uint8_t tile;
-	uint8_t* palette = oam[oam_idx*4 + 3] & 1 << 4 ? &lcd_registers[OBP1] : &lcd_registers[OBP0];
 
-	uint8_t colorA, colorB, tmp_pal;
-	uint8_t sprite_beg, sprite_end, sprite_offset;
+	update_sprite(oam_idx, block);
+
+	uint8_t pal;
 	uint8_t sprite_counter = 0;
-	uint8_t sx = oam[oam_idx*4 + 1];
 
-	bool h_flip = oam[oam_idx*4 + 3] & 1 << 5 ? true : false;
-	bool v_flip = oam[oam_idx*4 + 3] & 1 << 6 ? true : false;
+	uint8_t x_beg = block == 0 ? lcd_registers[SCX] % 8 : 0;
+	uint8_t x_end = block == blocks_to_draw-1 ? 8 - lcd_registers[SCX] % 8 : 8;
 
-	if(v_flip) 
-		common_line = sprite_size - 1 - common_line;
+	for(int j = x_beg; j < x_end; ++j){
 
-	uint8_t line = common_line % 8;
+		if(j >= sprite.beg && j < sprite.end){
 
-	if(sprite_size == 16){
-		if(common_line < 8)
-			tile = oam[oam_idx*4 + 2] & 0xFE;
-		else
-			tile = oam[oam_idx*4 + 2] | 0x1;
-	}
-	else
-		tile = oam[oam_idx*4 + 2];
-
-	uint8_t* tile_data = &vram1[tile * 16 + line * 2];
-	
-
-	if(sx - 8 <= block*8){
-		sprite_beg = 0;
-		sprite_end = sx - block*8;
-		sprite_offset = 8 - (sx - block*8);
-	}
-	else{
-		sprite_beg = sx - 8 - block*8;
-		sprite_end = block*8 + 8;
-		sprite_offset = 0;
-	}
-
-	for(int j = 0; j < 8; ++j){
-
-		if(j >= sprite_beg && j < sprite_end){
-			if(h_flip){
-				colorA = (tile_data[0] & 1 << (sprite_offset + sprite_counter)) ? 1 : 0;
-				colorB = (tile_data[1] & 1 << (sprite_offset + sprite_counter)) ? 2 : 0;
+			if(sprite.h_flip){
+				pal = get_color_rev(sprite.tile_data, sprite.offset + sprite_counter);
 			}
 			else{
-			colorA = (tile_data[0] & 1 << (7-(sprite_offset + sprite_counter))) ? 1 : 0;
-			colorB = (tile_data[1] & 1 << (7-(sprite_offset + sprite_counter))) ? 2 : 0;
+				pal = get_color(sprite.tile_data, sprite.offset + sprite_counter);
 			}
-			tmp_pal = colorB | colorA;	
+	
 			++sprite_counter;
-			if(tmp_pal == 0)
-				screen_buffer[lcd_registers[LY]][block*8 + j] = lcd_registers[BGP] & 0x3;
+
+			if(pal == 0){
+				pal = get_color(block_line_data, j);
+				draw_pixel(&lcd_registers[BGP], pal);
+			}
+
 			else
-				screen_buffer[lcd_registers[LY]][block*8 + j] = (*palette & (0x3 << tmp_pal * 2)) >> tmp_pal*2 ;
+				draw_pixel(sprite.palette, pal);
+
+			if(j == sprite.end-1 && sprite.sx-1 < block*8 + 8 && !visible_sprites->empty()){
+				visible_sprites->pop();
+			if(!visible_sprites->empty() && (oam[visible_sprites->top() * 4 + 1] - 8 < block*8 + 8) ){
+					update_sprite(visible_sprites->top(), block);
+					sprite_counter = 0;
+				}								
+			}
+			
 		}
 
 		else{
-			colorA = (block_line_data[0] & 1 << (7-j)) ? 1 : 0;
-			colorB = (block_line_data[1] & 1 << (7-j)) ? 2 : 0;
-			tmp_pal = colorB | colorA;	
-			screen_buffer[lcd_registers[LY]][block*8 + j] = (lcd_registers[BGP] & (0x3 << tmp_pal*2)) >> tmp_pal*2;
+			pal = get_color(block_line_data, j);
+			draw_pixel(&lcd_registers[BGP], pal);
 		}
 
 			
 	}
 
-	if((sx - 1 < block*8 + 8) || block == 19) //end of sprite or end of line
+	if(block == blocks_to_draw-1 && !visible_sprites->empty()) //end of line
 		visible_sprites->pop();
-		
 	
 }
 
 
 
-void lcd_driver::draw_bg_line(const uint8_t* block_line_data, const uint8_t block){
+void lcd_driver::draw_bg_line(const uint8_t* block_line_data, const uint8_t block, const uint8_t blocks_to_draw){
 
-	uint8_t colorA, colorB, tmp_pal;
-
-	for(int j = 0; j < 8; ++j){
-		colorA = (block_line_data[0] & 1 << (7-j)) ? 1 : 0;
-		colorB = (block_line_data[1] & 1 << (7-j)) ? 2 : 0;
-		tmp_pal = colorB | colorA;	
-		screen_buffer[lcd_registers[LY]][block*8 + j] = (lcd_registers[BGP] & (0x3 << tmp_pal*2)) >> tmp_pal*2;
+	uint8_t pal;
+	uint8_t x_beg = block == 0 ? lcd_registers[SCX] % 8 : 0;
+	uint8_t x_end = block == blocks_to_draw-1 ? 8 - lcd_registers[SCX] % 8 : 8;
+	for(int j = x_beg; j < x_end; ++j){
+		pal = get_color(block_line_data, j);
+		draw_pixel(&lcd_registers[BGP], pal);
 		}
 
 }
@@ -202,43 +252,49 @@ void lcd_driver::draw_line(){
 	}
 
 	uint8_t* bg_tile_nums =  (lcd_registers[LCDC] & 1 << 3) ? chr_code2 : chr_code1;
-	uint16_t block = (((lcd_registers[SCY] + lcd_registers[LY]) % 255) / 8) * 32 + lcd_registers[SCX]/8;
+	uint16_t block = ( ((lcd_registers[SCY] + lcd_registers[LY]) % 256) / 8) * 32 + lcd_registers[SCX]/8;
 	uint16_t row = (block/32 + 1)*32;
-	uint8_t line = lcd_registers[LY] % 8; //(lcd_registers[SCY] + lcd_registers[LY]) % 8;
+	uint8_t line =  (lcd_registers[SCY] +lcd_registers[LY]) % 8;
 	uint8_t* block_line_data;
 	uint8_t oam_idx;
 	uint8_t oam_x;
-	uint8_t oam_y;
-	
+	uint8_t curr_block = 0;
+	uint8_t x_off = lcd_registers[SCX] % 8;
+	uint8_t blocks_to_draw = x_off == 0 ? 20 : 21;
 //	std::cout << "sprites before loop: " << visible_sprites->size() << std::endl;
-	for(int i = 0; i < 20; ++i){
+
+	curr_px = 0;
+
+	while(curr_px < 160){
 		if(sign){
 			block_line_data = &bg_tile_data[(int8_t)(bg_tile_nums[block]) * 16 + line * 2];
 		}
 		else
-			block_line_data = &bg_tile_data[bg_tile_nums[block] *16 + line * 2];
+			block_line_data = &bg_tile_data[bg_tile_nums[block] * 16 + line * 2];
 
 		if(!visible_sprites->empty()){
 			
 			oam_idx = visible_sprites->top();
 			oam_x = oam[oam_idx*4+1];
-			if(((i*8 <= oam_x - 8) && ((i+1)*8+8 > oam_x - 1)) || (((i-1)*8 <= oam_x - 8) && (i*8 + 8 > oam_x))){
-				draw_sprite_line(oam_idx, block_line_data, i);
-	//			std::cout << visible_sprites->size() << std::endl;
+			if(  ( (curr_block*8 <= oam_x - 8) && (curr_block*8+8 > oam_x - 8) ) || 
+			( ( curr_block*8  <= oam_x -1 ) && (curr_block*8 + 8 > oam_x - 1) ) ){
+			//	std::cout << std::hex << (int)lcd_registers[LY] << "  " << (int)oam_x << std::endl;
+				draw_sprite_line(oam_idx, block_line_data, curr_block, blocks_to_draw);
+
 					
 			}
 			else
-				draw_bg_line(block_line_data, i);
+				draw_bg_line(block_line_data, curr_block, blocks_to_draw);
 		}
 
 		else
-			draw_bg_line(block_line_data, i);
+			draw_bg_line(block_line_data, curr_block, blocks_to_draw);
 
+		x_off = 0;
 		++block;
 		if(block == row)
 			block = row - 32;
-	//	else
-			//block = (block % row);
+		++curr_block;
 		
 	}
 //std::cout << "sprites after loop: " << visible_sprites->size() << std::endl;
