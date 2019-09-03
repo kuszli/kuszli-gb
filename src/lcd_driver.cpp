@@ -13,6 +13,7 @@ lcd_driver::lcd_driver(_memory& mem){
 	compare comp(mem);
 	sprites_cont = new std::vector<uint8_t>;
 	visible_sprites = new std::priority_queue<uint8_t, std::vector<uint8_t>, compare>(comp, *sprites_cont);
+	pixel_fifo = new std::deque<uint8_t>;
 
 	lcd_registers[STAT] &= 0xFC; //clear mode flags
 	lcd_registers[STAT] |= mode_flags[0];
@@ -33,8 +34,7 @@ lcd_driver::~lcd_driver(){
 	delete visible_sprites;
 }
 
-void lcd_driver::update_sprite(const uint8_t oam_idx, const uint8_t block){
-
+void lcd_driver::update_sprite(const uint8_t oam_idx){
 
 	sprite.size = lcd_registers[LCDC] & 1 << 2 ? 16 : 8;
 	sprite.sx = oam[oam_idx*4+1];
@@ -46,7 +46,7 @@ void lcd_driver::update_sprite(const uint8_t oam_idx, const uint8_t block){
 	if(sprite.v_flip) 
 		common_line = sprite.size - 1 - common_line;
 
-	uint8_t line = common_line % 8;
+	sprite.line = common_line % 8;
 
 	if(sprite.size == 16){
 		if(common_line < 8)
@@ -60,27 +60,18 @@ void lcd_driver::update_sprite(const uint8_t oam_idx, const uint8_t block){
 
 	sprite.palette = oam[oam_idx*4 + 3] & 1 << 4 ? &lcd_registers[OBP1] : &lcd_registers[OBP0];
 
-	sprite.tile_data = &vram1[sprite.tile * 16 + line * 2];
-	
-
-	if(sprite.sx - 8 <= block*8){
-		sprite.beg = 0;
-		sprite.end = sprite.sx - block*8;
-		sprite.offset = 8 - (sprite.sx - block*8);
-	}
-	else{
-		sprite.beg = sprite.sx - 8 - block*8;
-		sprite.end = 8;
-		sprite.offset = 0;
-	}
+	sprite.tile_data = &vram1[sprite.tile * 16 + sprite.line * 2];
 
 
 }
 
-void inline lcd_driver::draw_pixel(const uint8_t* pal, const uint8_t color){
-	screen_buffer[lcd_registers[LY]][curr_px++] = (*pal & (0x3 << color * 2)) >> color*2;
+void inline lcd_driver::draw_pixel(const uint8_t color){
+	screen_buffer[lcd_registers[LY]][curr_px++] = color;
 }
 
+uint8_t inline lcd_driver::get_pixel(const uint8_t* pal, const uint8_t color){
+	return (*pal & (0x3 << color * 2)) >> color*2;
+}
 
 uint8_t lcd_driver::get_color(const uint8_t* tile_data, const uint8_t px){
 	uint8_t colorA, colorB;
@@ -103,7 +94,59 @@ uint8_t lcd_driver::get_color_rev(const uint8_t* tile_data, const uint8_t px){
 
 
 
+void lcd_driver::fill_fifo_bgwin(const uint8_t* bg_map, const uint8_t* bg_data, uint16_t block){
+		
+	const uint8_t* block_line_data;
+	uint8_t pal;
+	uint8_t line =  (lcd_registers[SCY] +lcd_registers[LY]) % 8;
 
+	if(bg_data == vram2)
+		block_line_data = &bg_data[(int8_t)(bg_map[block]) * 16 + line * 2];
+	else
+		block_line_data = &bg_data[bg_map[block] * 16 + line * 2];
+
+
+	for(uint8_t i = 0; i < 8; ++i){
+		pal = get_color(block_line_data, i);
+		pixel_fifo->push_back(get_pixel(&lcd_registers[BGP], pal));
+	}
+}
+
+
+
+
+void lcd_driver::fill_fifo_oam(const uint8_t oam_idx, const uint8_t* bg_map, const uint8_t* bg_data, uint16_t block){
+	
+	update_sprite(oam_idx);
+
+	const uint8_t* block_line_data;
+
+	uint8_t pal;
+
+	uint8_t line = (lcd_registers[SCY] + lcd_registers[LY]) % 8;
+
+	if(bg_data == vram2)
+		block_line_data = &bg_data[(int8_t)(bg_map[block]) * 16 + line * 2];
+	else
+		block_line_data = &bg_data[bg_map[block] * 16 + line * 2];
+
+	for(uint8_t i = 0; i < 8; ++i){
+
+		if(sprite.h_flip)
+			pal = get_color_rev(sprite.tile_data, i);
+		else
+			pal = get_color(sprite.tile_data, i);
+
+		if(pal != 0){
+			if(pixel_fifo->at(i) < 0x80) //this pixel is bg pixel
+				pixel_fifo->at(i) = get_pixel(sprite.palette, pal) | 1 << 7;
+		}
+	}
+
+
+	visible_sprites->pop();
+
+}
 
 
 
@@ -144,7 +187,7 @@ uint8_t lcd_driver::find_common_line(const uint8_t oam_index){
 		}
 	}
 
-return common_line;
+	return common_line;
 
 }
 
@@ -156,80 +199,6 @@ void lcd_driver::draw_blank_line(){
 	}
 }
 
-void lcd_driver::draw_sprite_line(const uint8_t oam_idx, const uint8_t* block_line_data, const uint8_t block, const uint8_t blocks_to_draw){
-
-	if((oam[oam_idx*4+1] == 0) || (oam[oam_idx*4+1] >=168)){
-		visible_sprites->pop();
-		return;
-	}
-
-
-	update_sprite(oam_idx, block);
-
-	uint8_t pal;
-	uint8_t sprite_counter = 0;
-
-	uint8_t x_beg = block == 0 ? lcd_registers[SCX] % 8 : 0;
-	uint8_t x_end = block == blocks_to_draw-1 ? 8 - lcd_registers[SCX] % 8 : 8;
-
-	for(int j = x_beg; j < x_end; ++j){
-
-		if(j >= sprite.beg && j < sprite.end){
-
-			if(sprite.h_flip){
-				pal = get_color_rev(sprite.tile_data, sprite.offset + sprite_counter);
-			}
-			else{
-				pal = get_color(sprite.tile_data, sprite.offset + sprite_counter);
-			}
-	
-			++sprite_counter;
-
-			if(pal == 0){
-				pal = get_color(block_line_data, j);
-				draw_pixel(&lcd_registers[BGP], pal);
-			}
-
-			else
-				draw_pixel(sprite.palette, pal);
-
-			if(j == sprite.end-1 && sprite.sx-1 < block*8 + 8 && !visible_sprites->empty()){
-				visible_sprites->pop();
-			if(!visible_sprites->empty() && (oam[visible_sprites->top() * 4 + 1] - 8 < block*8 + 8) ){
-					update_sprite(visible_sprites->top(), block);
-					sprite_counter = 0;
-				}								
-			}
-			
-		}
-
-		else{
-			pal = get_color(block_line_data, j);
-			draw_pixel(&lcd_registers[BGP], pal);
-		}
-
-			
-	}
-
-	if(block == blocks_to_draw-1 && !visible_sprites->empty()) //end of line
-		visible_sprites->pop();
-	
-}
-
-
-
-void lcd_driver::draw_bg_line(const uint8_t* block_line_data, const uint8_t block, const uint8_t blocks_to_draw){
-
-	uint8_t pal;
-	uint8_t x_beg = block == 0 ? lcd_registers[SCX] % 8 : 0;
-	uint8_t x_end = block == blocks_to_draw-1 ? 8 - lcd_registers[SCX] % 8 : 8;
-	for(int j = x_beg; j < x_end; ++j){
-		pal = get_color(block_line_data, j);
-		draw_pixel(&lcd_registers[BGP], pal);
-		}
-
-}
-
 
 	
 void lcd_driver::draw_line(){
@@ -239,17 +208,15 @@ void lcd_driver::draw_line(){
 		return;
 	}
 
-	bool sign;
 	uint8_t* bg_tile_data;
 
-	if(lcd_registers[LCDC] & 1 << 4){
+	if(lcd_registers[LCDC] & 1 << 4)
 		bg_tile_data = vram1;
-		sign = false;
-	}
-	else{
+	
+	else
 		bg_tile_data = vram2;
-		sign = true;	
-	}
+	
+	
 
 	uint8_t* bg_tile_nums =  (lcd_registers[LCDC] & 1 << 3) ? chr_code2 : chr_code1;
 	uint16_t block = ( ((lcd_registers[SCY] + lcd_registers[LY]) % 256) / 8) * 32 + lcd_registers[SCX]/8;
@@ -258,46 +225,41 @@ void lcd_driver::draw_line(){
 	uint8_t* block_line_data;
 	uint8_t oam_idx;
 	uint8_t oam_x;
-	uint8_t curr_block = 0;
 	uint8_t x_off = lcd_registers[SCX] % 8;
-	uint8_t blocks_to_draw = x_off == 0 ? 20 : 21;
-//	std::cout << "sprites before loop: " << visible_sprites->size() << std::endl;
 
 	curr_px = 0;
 
-	while(curr_px < 160){
-		if(sign){
-			block_line_data = &bg_tile_data[(int8_t)(bg_tile_nums[block]) * 16 + line * 2];
-		}
-		else
-			block_line_data = &bg_tile_data[bg_tile_nums[block] * 16 + line * 2];
+	pixel_fifo->clear();
+	fill_fifo_bgwin(bg_tile_nums, bg_tile_data, block);
 
-		if(!visible_sprites->empty()){
-			
+	for(uint8_t i = 0; i < x_off; ++i){
+		pixel_fifo->pop_front();
+	}
+
+
+	while(curr_px < 160){
+
+
+		if(pixel_fifo->size() < 9){ //fetch
+			++block;
+			if(block == row)
+				block = row - 32;
+			fill_fifo_bgwin(bg_tile_nums, bg_tile_data, block);
+		}
+
+		if(!visible_sprites->empty()){	
 			oam_idx = visible_sprites->top();
 			oam_x = oam[oam_idx*4+1];
-			if(  ( (curr_block*8 <= oam_x - 8) && (curr_block*8+8 > oam_x - 8) ) || 
-			( ( curr_block*8  <= oam_x -1 ) && (curr_block*8 + 8 > oam_x - 1) ) ){
-			//	std::cout << std::hex << (int)lcd_registers[LY] << "  " << (int)oam_x << std::endl;
-				draw_sprite_line(oam_idx, block_line_data, curr_block, blocks_to_draw);
-
-					
+			if(curr_px == oam_x - 8){
+				fill_fifo_oam(oam_idx, bg_tile_nums, bg_tile_data, block);
 			}
-			else
-				draw_bg_line(block_line_data, curr_block, blocks_to_draw);
 		}
-
-		else
-			draw_bg_line(block_line_data, curr_block, blocks_to_draw);
-
-		x_off = 0;
-		++block;
-		if(block == row)
-			block = row - 32;
-		++curr_block;
+	
+		draw_pixel(pixel_fifo->front() & 0x3); //push
+		pixel_fifo->pop_front();
 		
+
 	}
-//std::cout << "sprites after loop: " << visible_sprites->size() << std::endl;
 
 }
 		

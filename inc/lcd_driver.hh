@@ -5,6 +5,7 @@
 #include<iostream>
 #include<fstream>
 #include<queue>
+#include<deque>
 #include<functional>
 
 #include "defines.h"
@@ -17,9 +18,7 @@
 struct _sprite{
 
 	uint8_t size;
-	uint8_t beg;
-	uint8_t end;
-	uint8_t offset;
+	uint8_t line;
 	uint8_t sx;
 	uint8_t tile;
 	uint8_t* palette;
@@ -55,6 +54,7 @@ class lcd_driver{
 	uint8_t** screen_buffer;
 	std::vector<uint8_t>* sprites_cont;
 	std::priority_queue<uint8_t, std::vector<uint8_t>, compare>* visible_sprites;
+	std::deque<uint8_t>* pixel_fifo;
 	_sprite sprite;
 
 	uint16_t mode_counter[4] = {0};
@@ -77,12 +77,14 @@ class lcd_driver{
 	void draw_line();
 	void draw_sprite_line(const uint8_t oam_idx, const uint8_t* block_line_data, const uint8_t block, const uint8_t blocks_to_draw);
 	void draw_bg_line(const uint8_t* block_line_data, const uint8_t block, const uint8_t blocks_to_draw);
-	void draw_pixel(const uint8_t* pal, const uint8_t color);
+	void draw_pixel(const uint8_t color);
+	uint8_t get_pixel(const uint8_t* pal, const uint8_t color);
 	uint8_t get_color(const uint8_t* tile_data, const uint8_t px);
 	uint8_t get_color_rev(const uint8_t* tile_data, const uint8_t px);
 	void search_oam();
- 
-	void update_sprite(const uint8_t oam_idx, const uint8_t block);
+ 	void fill_fifo_bgwin(const uint8_t* bg_map, const uint8_t* bg_data, uint16_t block);
+	void fill_fifo_oam(const uint8_t oam_idx, const uint8_t* bg_map, const uint8_t* bg_data, uint16_t block);
+	void update_sprite(const uint8_t oam_idx);
 	
 
 //	bool compare(uint8_t A, uint8_t B){ return oam[4*A+1] > oam[4*B+1]; }
