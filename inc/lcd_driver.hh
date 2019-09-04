@@ -82,8 +82,8 @@ class lcd_driver{
 	uint8_t get_color(const uint8_t* tile_data, const uint8_t px);
 	uint8_t get_color_rev(const uint8_t* tile_data, const uint8_t px);
 	void search_oam();
- 	void fill_fifo_bgwin(const uint8_t* bg_map, const uint8_t* bg_data, uint16_t block);
-	void fill_fifo_oam(const uint8_t oam_idx, const uint8_t* bg_map, const uint8_t* bg_data, uint16_t block);
+ 	void fill_fifo_bgwin(const uint8_t* bg_map, const uint8_t* bg_data, uint16_t block, const bool windowing);
+	void fill_fifo_oam(const uint8_t oam_idx, const uint8_t* bg_map, const uint8_t* bg_data, uint16_t block, const bool windowing);
 	void update_sprite(const uint8_t oam_idx);
 	
 
