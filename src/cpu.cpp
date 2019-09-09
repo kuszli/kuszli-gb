@@ -3,7 +3,7 @@
 #include "opcodes_init_list.h"
 
 
-cpu::cpu(_memory& mem){
+cpu::cpu(_memory* mem){
 memory = mem;
 IME = false;
 _state = running;
@@ -14,11 +14,21 @@ CB_array = new (uint8_t (cpu::*[256])()){ CB_ARRAY };
 
 PC = 0x100;
 SP = 0xFFFE;
-memory[0xFF40] = 0x91;
+A = 1;
+F = 0xB0;
+B = 0;
+C = 0x13;
+D = 0;
+E = 0xD8;
+H = 1;
+L = 0x4D;
+
+(*memory)[0xFF40] = 0x91;
 
 regs = new uint8_t*[8]{&A,&F,&B,&C,&D,&E,&H,&L};
 regs16 = new uint16_t*[2]{&SP,&PC};
 
+EI_scheduled = false;
 
 }
 
@@ -27,23 +37,25 @@ cpu::~cpu(){
 	delete[] CB_array;
 }
 
-void cpu::handle_interrupts(uint8_t id){
+bool cpu::handle_interrupts(uint8_t id){
 
 	if(id == 0xFF)
-		return;
+		return false;
 	
 	if(_state == halted)
 		_state = running;
 
 
 	if(IME == true){
-
-		memory.write(IF_REGISTER, memory[IF_REGISTER] & ~(1 << id));
+		memory->write(IF_REGISTER, (*memory)[IF_REGISTER] & ~(1 << id));
 		IME = false;
-		memory.write(--SP, PC >> 8);
-		memory.write(--SP, PC & 0xFF); 
+		memory->write(--SP, PC >> 8);
+		memory->write(--SP, PC & 0xFF); 
 		PC = interrupt_address[id];
+		return true;
 	}
+	else
+		return false;
 	
 		
 }
@@ -51,32 +63,40 @@ void cpu::handle_interrupts(uint8_t id){
 
 uint8_t cpu::decode(){
 
+	if(EI_scheduled){
+		IME = true;
+		EI_scheduled = false;
+	}
+
 	if(_state == halted)
-		return 4;
+		return 0;
 	
 	else
-		return memory[PC++];
+		return (*memory)[PC++];
 }
 
+uint8_t cpu::execute(const uint8_t opcode){
+	return (this->*opcode_array[opcode])();
+}
 	
 //*********generic cpu::instructions*********************************************
 
 uint8_t cpu::NOP(){ return 4; }
 
 uint8_t cpu::LD_REG16_d16(uint8_t &reg_high, uint8_t &reg_low){
-	reg_low = memory[PC++];
-	reg_high = memory[PC++];
+	reg_low = (*memory)[PC++];
+	reg_high = (*memory)[PC++];
 	return 12;
 }
 
 uint8_t cpu::LD_REG8_d8(uint8_t &reg){
-	reg = memory[PC++];
+	reg = (*memory)[PC++];
 	return 8;
 }
 
 
 uint8_t cpu::LD_REG16_A(const uint16_t reg){
-	memory.write(reg, A);
+	memory->write(reg, A);
 	return 8;
 }
 
@@ -146,11 +166,11 @@ uint8_t cpu::RLCA(){
 }
 
 uint8_t cpu::LD_a16_SP(){
-	uint8_t low = memory[PC++];
-	uint8_t high = memory[PC++];
+	uint8_t low = (*memory)[PC++];
+	uint8_t high = (*memory)[PC++];
 	uint16_t addr = (high << 8) | low;
-	memory.write(addr, SP & 0xFF); 
-	memory.write(addr+1, SP >> 8); 
+	memory->write(addr, SP & 0xFF); 
+	memory->write(addr+1, SP >> 8); 
 	return 20;
 }
 
@@ -178,7 +198,7 @@ uint8_t cpu::ADD_HL_REG16(const uint16_t reg){
 
 
 uint8_t cpu::LD_A_ADDR(const uint16_t reg_addr){
-	A = memory[reg_addr];
+	A = (*memory)[reg_addr];
 	return 8;
 }
 
@@ -199,11 +219,12 @@ uint8_t cpu::RRCA(){
 
 uint8_t cpu::STOP(){
 	//_state = stopped;
+	PC++;
 	return 4;
 }
 
 uint8_t cpu::LD_ADDR_A(const uint16_t reg_addr){
-	memory.write(reg_addr, A);
+	memory->write(reg_addr, A);
 	return 8;
 }
 
@@ -227,7 +248,7 @@ uint8_t cpu::RLA(){
 }
 
 uint8_t cpu::JR_r8(){
-	PC+=(int8_t)memory[PC] + 1;
+	PC+=(int8_t)(*memory)[PC] + 1;
 	return 12;
 }
 
@@ -259,19 +280,19 @@ uint8_t cpu::JR_NZ_r8(){
 		return 8;
 	}
 	else{
-		PC+=(int8_t)memory[PC] + 1;
+		PC+=(int8_t)(*memory)[PC] + 1;
 		return 12;
 	}
 }
 
 uint8_t cpu::LD_HLINC_A(){
-	memory.write(HL, A);
+	memory->write(HL, A);
 	INC_REG16(H,L); //this might need some workaround
 	return 8;
 }
 
 uint8_t cpu::LD_HLDEC_A(){
-	memory.write(HL, A);
+	memory->write(HL, A);
 	DEC_REG16(H,L); //this might need some workaround
 	return 8;
 }
@@ -316,19 +337,19 @@ uint8_t cpu::JR_Z_r8(){
 		return 8;
 	}
 	else{
-		PC+=(int8_t)memory[PC] + 1;
+		PC+=(int8_t)(*memory)[PC] + 1;
 		return 12;
 	}
 }
 
 uint8_t cpu::LD_A_HLINC(){
-	A = memory[HL];
+	A = (*memory)[HL];
 	INC_REG16(H,L); //this might need some workaround
 	return 8;
 }
 
 uint8_t cpu::LD_A_HLDEC(){
-	A = memory[HL];
+	A = (*memory)[HL];
 	DEC_REG16(H,L); //this might need some workaround
 	return 8;
 }
@@ -347,14 +368,14 @@ uint8_t cpu::JR_NC_r8(){
 		return 8;
 	}
 	else{
-		PC+=(int8_t)memory[PC] + 1;
+		PC+=(int8_t)(*memory)[PC] + 1;
 		return 12;
 	}
 }
 
 uint8_t cpu::LD_SP_d16(){
-	uint8_t reg_low = memory[PC++];
-	uint8_t reg_high = memory[PC++];
+	uint8_t reg_low = (*memory)[PC++];
+	uint8_t reg_high = (*memory)[PC++];
 	SP = (reg_high) << 8 | reg_low;
 	return 12;
 }
@@ -371,14 +392,14 @@ uint8_t cpu::DEC_SP(){
 }
 
 uint8_t cpu::INC_HLADDR(){
-	if( (memory[HL] & 0xF) == 0xF)
+	if( ((*memory)[HL] & 0xF) == 0xF)
 		F |= HALF_CARRY_FLAG;
 	else 
 		F &= ~HALF_CARRY_FLAG;
 
-	++memory[HL];
+	++(*memory)[HL];
 
-	if(memory[HL] == 0)
+	if((*memory)[HL] == 0)
 		F |= ZERO_FLAG;
 	else 
 		F &= ~ZERO_FLAG;
@@ -390,13 +411,13 @@ uint8_t cpu::INC_HLADDR(){
 
 
 uint8_t cpu::DEC_HLADDR(){
-	if( (memory[HL] & 0xF) == 0)
+	if( ((*memory)[HL] & 0xF) == 0)
 		F |= HALF_CARRY_FLAG;
 	else 
 		F &= ~HALF_CARRY_FLAG;
-	--memory[HL];
+	--(*memory)[HL];
 
-	if(memory[HL] == 0)
+	if((*memory)[HL] == 0)
 		F |= ZERO_FLAG;
 	else 
 		F &= ~ZERO_FLAG;
@@ -408,7 +429,7 @@ uint8_t cpu::DEC_HLADDR(){
 
 
 uint8_t cpu::LD_HLADDR_d8(){
-	memory.write(HL, memory[PC++]);
+	memory->write(HL, (*memory)[PC++]);
 	return 12;
 }
 
@@ -425,7 +446,7 @@ uint8_t cpu::JR_C_r8(){
 		return 8;
 	}
 	else{
-		PC+=(int8_t)memory[PC] + 1;
+		PC+=(int8_t)(*memory)[PC] + 1;
 		return 12;
 	}
 }
@@ -448,21 +469,22 @@ uint8_t cpu::LD_REG8_REG8(uint8_t &reg1, const uint8_t reg2){
 
 
 uint8_t cpu::LD_HLADDR_REG8(const uint8_t reg){
-	memory.write(HL, reg);
+	memory->write(HL, reg);
 	return 8;
 }
 
 uint8_t cpu::LD_REG8_HLADDR(uint8_t &reg){
-	reg = memory[HL];
+	reg = (*memory)[HL];
 	return 8;
 }
 
 uint8_t cpu::HALT(){
-	if( (memory[IE_REGISTER] & memory[IF_REGISTER]) & 0x1F)
+	if( ((*memory)[IE_REGISTER] & (*memory)[IF_REGISTER]) & 0x1F )
 		--PC;
+
 	else
 		_state = halted;
-
+	
 	return 4;
 }
 
@@ -490,8 +512,8 @@ uint8_t cpu::ADD_A_REG8(const uint8_t reg){
 
 
 uint8_t cpu::ADD_A_HLADDR(){
-	uint16_t res = A+memory[HL];
-	if( ((A & 0xF) + (memory[HL] & 0xF)) & 1 << 4)
+	uint16_t res = A+(*memory)[HL];
+	if( ((A & 0xF) + ((*memory)[HL] & 0xF)) & 1 << 4)
 		F |= HALF_CARRY_FLAG;
 	else 
 		F &= ~HALF_CARRY_FLAG;
@@ -501,7 +523,7 @@ uint8_t cpu::ADD_A_HLADDR(){
 	else 
 		F &= ~CARRY_FLAG;
 
-	A+=memory[HL];
+	A+=(*memory)[HL];
 	if(A == 0)
 		F |= ZERO_FLAG;
 	else 
@@ -543,9 +565,9 @@ uint8_t cpu::ADC_A_REG8(const uint8_t reg){
 uint8_t cpu::ADC_A_HLADDR(){
 	uint8_t flag = (F & CARRY_FLAG)? 1:0;
 
-	uint16_t res = A+memory[HL]+flag;
+	uint16_t res = A+(*memory)[HL]+flag;
 
-	if( ((A & 0xF) + (memory[HL] & 0xF) + flag) & 1 << 4)
+	if( ((A & 0xF) + ((*memory)[HL] & 0xF) + flag) & 1 << 4)
 		F |= HALF_CARRY_FLAG;
 	else
 		F &= ~HALF_CARRY_FLAG;
@@ -555,7 +577,7 @@ uint8_t cpu::ADC_A_HLADDR(){
 	else
 		F &= ~CARRY_FLAG;
 
-	A+=memory[HL]+flag;
+	A+=(*memory)[HL]+flag;
 
 	if(A == 0)
 		F |= ZERO_FLAG;
@@ -596,17 +618,17 @@ uint8_t cpu::SUB_REG8(const uint8_t reg){
 
 
 uint8_t cpu::SUB_HLADDR(){
-	if(memory[HL] > A)
+	if((*memory)[HL] > A)
 		F |= CARRY_FLAG;
 	else
 		F &= ~CARRY_FLAG;
 
-	if((memory[HL] & 0xF) > (A & 0xF))
+	if(((*memory)[HL] & 0xF) > (A & 0xF))
 		F |= HALF_CARRY_FLAG;
 	else
 		F &= ~HALF_CARRY_FLAG;	
 
-	A-=memory[HL];
+	A-=(*memory)[HL];
 
 	if(A == 0)
 		F |= ZERO_FLAG;
@@ -648,17 +670,17 @@ uint8_t cpu::SBC_REG8(const uint8_t reg){
 uint8_t cpu::SBC_HLADDR(){
 	uint8_t flag = (F & CARRY_FLAG)? 1:0;
 
-	if(memory[HL] + flag > A)
+	if((*memory)[HL] + flag > A)
 		F |= CARRY_FLAG;
 	else
 		F &= ~CARRY_FLAG;
 
-	if((memory[HL] & 0xF) + flag > (A & 0xF))
+	if(((*memory)[HL] & 0xF) + flag > (A & 0xF))
 		F |= HALF_CARRY_FLAG;
 	else
 		F &= ~HALF_CARRY_FLAG;	
 
-	A-=(memory[HL]+flag);
+	A-=((*memory)[HL]+flag);
 
 	if(A == 0)
 		F |= ZERO_FLAG;
@@ -687,7 +709,7 @@ uint8_t cpu::AND_REG8(const uint8_t reg){
 
 
 uint8_t cpu::AND_HLADDR(){
-	A &= memory[HL];
+	A &= (*memory)[HL];
 	if(A==0)
 		F |= ZERO_FLAG;
 	else
@@ -717,7 +739,7 @@ uint8_t cpu::XOR_REG8(const uint8_t reg){
 
 
 uint8_t cpu::XOR_HLADDR(){
-	A ^= memory[HL];
+	A ^= (*memory)[HL];
 	if(A == 0)
 		F |= ZERO_FLAG;
 	else
@@ -746,7 +768,7 @@ uint8_t cpu::OR_REG8(const uint8_t reg){
 
 
 uint8_t cpu::OR_HLADDR(){
-	A |= memory[HL];
+	A |= (*memory)[HL];
 	if(A == 0)
 		F |= ZERO_FLAG;
 	else
@@ -786,18 +808,18 @@ uint8_t cpu::CP_REG8(const uint8_t reg){
 
 
 uint8_t cpu::CP_HLADDR(){
-	if(memory[HL] > A)
+	if((*memory)[HL] > A)
 		F |= CARRY_FLAG;
 	else
 		F &= ~CARRY_FLAG;
 
-	if((memory[HL] & 0xF) > (A & 0xF))
+	if(((*memory)[HL] & 0xF) > (A & 0xF))
 		F |= HALF_CARRY_FLAG;
 	else
 		F &= ~HALF_CARRY_FLAG;	
 
 
-	if(A == memory[HL])
+	if(A == (*memory)[HL])
 		F |= ZERO_FLAG;
 	else
 		F &= ~ZERO_FLAG;
@@ -814,8 +836,8 @@ uint8_t cpu::RET_NZ(){
 	if(F & ZERO_FLAG)
 		return 8;
 	else{
-		uint8_t tmp = memory[SP++];
-		PC = (memory[SP++]) << 8 | tmp;
+		uint8_t tmp = (*memory)[SP++];
+		PC = ((*memory)[SP++]) << 8 | tmp;
 		return 20;
 	}
 }
@@ -826,23 +848,23 @@ uint8_t cpu::RET_NC(){
 	if(F & CARRY_FLAG)
 		return 8;
 	else{
-		uint8_t tmp = memory[SP++];
-		PC = (memory[SP++]) << 8 | tmp;
+		uint8_t tmp = (*memory)[SP++];
+		PC = ((*memory)[SP++]) << 8 | tmp;
 		return 20;
 	}
 }
 
 
 uint8_t cpu::POP(uint8_t &reg_high, uint8_t &reg_low){
-	reg_low = memory[SP++];
-	reg_high = memory[SP++];
+	reg_low = (*memory)[SP++];
+	reg_high = (*memory)[SP++];
 	F &= 0xF0;
 	return 12;
 }
 
 uint8_t cpu::JP_NZ(){
-	uint8_t tmpl = memory[PC++];
-	uint8_t tmph = memory[PC++];
+	uint8_t tmpl = (*memory)[PC++];
+	uint8_t tmph = (*memory)[PC++];
 	if(F & ZERO_FLAG)
 		return 12;
 	else{
@@ -854,8 +876,8 @@ uint8_t cpu::JP_NZ(){
 
 
 uint8_t cpu::JP_NC(){
-	uint8_t tmpl = memory[PC++];
-	uint8_t tmph = memory[PC++];
+	uint8_t tmpl = (*memory)[PC++];
+	uint8_t tmph = (*memory)[PC++];
 	if(F & CARRY_FLAG)
 		return 12;
 	else{
@@ -865,21 +887,21 @@ uint8_t cpu::JP_NC(){
 }
 
 uint8_t cpu::JP(){
-	uint8_t tmpl = memory[PC++];
-	uint8_t tmph = memory[PC++];
+	uint8_t tmpl = (*memory)[PC++];
+	uint8_t tmph = (*memory)[PC++];
 	PC = (tmph << 8) | tmpl;
 	return 16;	
 }
 
 uint8_t cpu::CALL_NZ(){
-	uint8_t tmpl = memory[PC++];
-	uint8_t tmph = memory[PC++];
+	uint8_t tmpl = (*memory)[PC++];
+	uint8_t tmph = (*memory)[PC++];
 	if(F & ZERO_FLAG)
 		return 12;
 	else{
 		uint16_t pctmp = PC;//+1;
-		memory.write(--SP, pctmp >> 8);
-		memory.write(--SP, pctmp & 0xFF);
+		memory->write(--SP, pctmp >> 8);
+		memory->write(--SP, pctmp & 0xFF);
 		PC = (tmph << 8) | tmpl;
 		return 24;
 	}
@@ -887,14 +909,14 @@ uint8_t cpu::CALL_NZ(){
 }
 
 uint8_t cpu::CALL_NC(){
-	uint8_t tmpl = memory[PC++];
-	uint8_t tmph = memory[PC++];
+	uint8_t tmpl = (*memory)[PC++];
+	uint8_t tmph = (*memory)[PC++];
 	if(F & CARRY_FLAG)
 		return 12;
 	else{
 		uint16_t pctmp = PC;//+1;
-		memory.write(--SP, pctmp >> 8);
-		memory.write(--SP, pctmp & 0xFF);
+		memory->write(--SP, pctmp >> 8);
+		memory->write(--SP, pctmp & 0xFF);
 		PC = (tmph << 8) | tmpl;
 		return 24;
 	}
@@ -902,19 +924,19 @@ uint8_t cpu::CALL_NC(){
 }
 
 uint8_t cpu::PUSH(const uint16_t reg){
-	memory.write(--SP, reg >> 8);
-	memory.write(--SP, reg & 0xFF);
+	memory->write(--SP, reg >> 8);
+	memory->write(--SP, reg & 0xFF);
 	return 16;
 }
 
 uint8_t cpu::PUSH2(uint8_t a, uint8_t b){
-	memory.write(--SP, a);
-	memory.write(--SP, b);
+	memory->write(--SP, a);
+	memory->write(--SP, b);
 	return 16;
 }
 
 uint8_t cpu::ADD_A_d8(){
-	uint8_t tmp = memory[PC++];
+	uint8_t tmp = (*memory)[PC++];
 	uint16_t res = A+tmp;
 	if( ((A & 0xF) + (tmp & 0xF)) & 1 << 4)
 		F |= HALF_CARRY_FLAG;
@@ -938,7 +960,7 @@ uint8_t cpu::ADD_A_d8(){
 
 
 uint8_t cpu::SUB_A_d8(){
-	uint8_t tmp = memory[PC++];
+	uint8_t tmp = (*memory)[PC++];
 	if(tmp > A)
 		F |= CARRY_FLAG;
 	else
@@ -962,7 +984,7 @@ uint8_t cpu::SUB_A_d8(){
 }
 
 uint8_t cpu::AND_A_d8(){
-	uint8_t tmp = memory[PC++];
+	uint8_t tmp = (*memory)[PC++];
 	A &= tmp;
 	if(A==0)
 		F |= ZERO_FLAG;
@@ -977,7 +999,7 @@ uint8_t cpu::AND_A_d8(){
 }
 
 uint8_t cpu::OR_A_d8(){
-	uint8_t tmp = memory[PC++];
+	uint8_t tmp = (*memory)[PC++];
 	A |= tmp;
 	if(A == 0)
 		F |= ZERO_FLAG;
@@ -1003,8 +1025,8 @@ uint8_t cpu::RET_Z(){
 	if((F & ZERO_FLAG)==0)
 		return 8;
 	else{
-		uint8_t tmp = memory[SP++];
-		PC = (memory[SP++]) << 8 | tmp;
+		uint8_t tmp = (*memory)[SP++];
+		PC = ((*memory)[SP++]) << 8 | tmp;
 		return 20;
 	}
 }
@@ -1014,29 +1036,29 @@ uint8_t cpu::RET_C(){
 	if((F & CARRY_FLAG)==0)
 		return 8;
 	else{
-		uint8_t tmp = memory[SP++];
-		PC = (memory[SP++]) << 8 | tmp;
+		uint8_t tmp = (*memory)[SP++];
+		PC = ((*memory)[SP++]) << 8 | tmp;
 		return 20;
 	}
 }
 
 uint8_t cpu::RET(){
-		uint8_t tmp = memory[SP++];
-		PC = (memory[SP++]) << 8 | tmp;
+		uint8_t tmp = (*memory)[SP++];
+		PC = ((*memory)[SP++]) << 8 | tmp;
 		return 16;
 }
 
 
 uint8_t cpu::RETI(){
-	uint8_t tmp = memory[SP++];
-	PC = (memory[SP++]) << 8 | tmp;
+	uint8_t tmp = (*memory)[SP++];
+	PC = ((*memory)[SP++]) << 8 | tmp;
 	IME = true;
 	return 16;
 }
 
 uint8_t cpu::JP_Z(){
-	uint8_t tmpl = memory[PC++];
-	uint8_t tmph = memory[PC++];
+	uint8_t tmpl = (*memory)[PC++];
+	uint8_t tmph = (*memory)[PC++];
 	if((F & ZERO_FLAG)==0)
 		return 12;
 	else{
@@ -1046,8 +1068,8 @@ uint8_t cpu::JP_Z(){
 }
 
 uint8_t cpu::JP_C(){
-	uint8_t tmpl = memory[PC++];
-	uint8_t tmph = memory[PC++];
+	uint8_t tmpl = (*memory)[PC++];
+	uint8_t tmph = (*memory)[PC++];
 	if((F & CARRY_FLAG)==0)
 		return 12;
 	else{
@@ -1063,20 +1085,20 @@ uint8_t cpu::JP_HLADDR(){
 
 
 uint8_t cpu::PREFIX_CB(){
-return (this->*CB_array[memory[PC++]])();
+return (this->*CB_array[(*memory)[PC++]])();
 
 }
 
 uint8_t cpu::CALL_Z(){
 
-	uint8_t tmpl = memory[PC++];
-	uint8_t tmph = memory[PC++];
+	uint8_t tmpl = (*memory)[PC++];
+	uint8_t tmph = (*memory)[PC++];
 	if((F & ZERO_FLAG)==0)
 		return 12;
 	else{
 		uint16_t pctmp = PC;//+1;
-		memory.write(--SP, pctmp >> 8);
-		memory.write(--SP, pctmp & 0xFF);
+		memory->write(--SP, pctmp >> 8);
+		memory->write(--SP, pctmp & 0xFF);
 		PC = (tmph << 8) | tmpl;
 		return 24;
 	}
@@ -1084,26 +1106,26 @@ uint8_t cpu::CALL_Z(){
 
 
 uint8_t cpu::CALL_C(){
-	uint8_t tmpl = memory[PC++];
-	uint8_t tmph = memory[PC++];
+	uint8_t tmpl = (*memory)[PC++];
+	uint8_t tmph = (*memory)[PC++];
 	if((F & CARRY_FLAG)==0)
 		return 12;
 	else{
 		uint16_t pctmp = PC;//+1;
-		memory.write(--SP, pctmp >> 8);
-		memory.write(--SP, pctmp & 0xFF);
+		memory->write(--SP, pctmp >> 8);
+		memory->write(--SP, pctmp & 0xFF);
 		PC = (tmph << 8) | tmpl;
 		return 24;
 	}
 }
 
 uint8_t cpu::CALL(){
-	uint8_t tmpl = memory[PC++];
-	uint8_t tmph = memory[PC++];
+	uint8_t tmpl = (*memory)[PC++];
+	uint8_t tmph = (*memory)[PC++];
 
 	uint16_t pctmp = PC;
-	memory.write(--SP, pctmp >> 8);
-	memory.write(--SP, pctmp & 0xFF);
+	memory->write(--SP, pctmp >> 8);
+	memory->write(--SP, pctmp & 0xFF);
 	PC = (tmph << 8) | tmpl;
 	return 24;
 }
@@ -1111,7 +1133,7 @@ uint8_t cpu::CALL(){
 
 uint8_t cpu::ADC_A_d8(){
 	uint8_t flag = (F & CARRY_FLAG)? 1:0;
-	uint8_t val = memory[PC++];
+	uint8_t val = (*memory)[PC++];
 	uint16_t res = A+val+flag;
 
 	if( ((A & 0xF) + (val & 0xF) + flag) & 1 << 4)
@@ -1139,7 +1161,7 @@ uint8_t cpu::ADC_A_d8(){
 
 uint8_t cpu::SBC_A_d8(){
 	uint8_t flag = (F & CARRY_FLAG)? 1:0;
-	uint8_t val = memory[PC++];
+	uint8_t val = (*memory)[PC++];
 
 	if(val + flag > A)
 		F |= CARRY_FLAG;
@@ -1165,7 +1187,7 @@ uint8_t cpu::SBC_A_d8(){
 }
 
 uint8_t cpu::XOR_A_d8(){
-	uint8_t val = memory[PC++];
+	uint8_t val = (*memory)[PC++];
 	A ^= val;
 	if(A == 0)
 		F |= ZERO_FLAG;
@@ -1180,7 +1202,7 @@ uint8_t cpu::XOR_A_d8(){
 }
 
 uint8_t cpu::CP_A_d8(){
-	uint8_t val = memory[PC++];
+	uint8_t val = (*memory)[PC++];
 
 	if(val > A)
 		F |= CARRY_FLAG;
@@ -1204,35 +1226,36 @@ uint8_t cpu::CP_A_d8(){
 }
 
 uint8_t cpu::LDH_a8_A(){
-	uint8_t val = memory[PC++];
-	memory.write(0xFF00 + val, A);
+	uint8_t val = (*memory)[PC++];
+	memory->write(0xFF00 + val, A);
 	return 12;
 }
 
 uint8_t cpu::LDH_A_a8(){
-	uint8_t val = memory[PC++];
-	A = memory[0xFF00 + val];
+	uint8_t val = (*memory)[PC++];
+	A = (*memory)[0xFF00 + val];
 	return 12;
 }
 
 
 uint8_t cpu::LD_FFC_A(){
-	memory.write(0xFF00 + C, A);
+	memory->write(0xFF00 + C, A);
 	return 8;
 }
 
 uint8_t cpu::LD_A_FFC(){
-	A = memory[0xFF00 + C];
+	A = (*memory)[0xFF00 + C];
 	return 8;
 }
 
 uint8_t cpu::DI(){
+	EI_scheduled = false;
 	IME = false;
 	return 4;
 }
 
 uint8_t cpu::ADD_SP_r8(){
-	uint8_t val = memory[PC++];
+	uint8_t val = (*memory)[PC++];
 	if( ((SP & 0xF) + (val & 0xF)) & 1 << 4)
 		F |= HALF_CARRY_FLAG;
 	else
@@ -1267,27 +1290,29 @@ uint8_t cpu::LD_SP_HL(){
 }
 
 uint8_t cpu::LD_ADDR_A(){
-	uint8_t tmpl = memory[PC++];
-	uint8_t tmph = memory[PC++];
-	memory.write((tmph << 8) | tmpl, A);
+	uint8_t tmpl = (*memory)[PC++];
+	uint8_t tmph = (*memory)[PC++];
+	memory->write((tmph << 8) | tmpl, A);
 	return 16;
 }
 
 
 uint8_t cpu::LD_A_ADDR(){
-	uint8_t tmpl = memory[PC++];
-	uint8_t tmph = memory[PC++];
-	A = memory[(tmph << 8) | tmpl];
+	uint8_t tmpl = (*memory)[PC++];
+	uint8_t tmph = (*memory)[PC++];
+	A = (*memory)[(tmph << 8) | tmpl];
 	return 16;
 }
 
 uint8_t cpu::EI(){
-	IME = true;
+	EI_scheduled = true;
 	return 4;
 }
 
 uint8_t cpu::ERR(){
-	return -1;
+	//std::cout << "SP: " << std::hex << (int)SP << std::endl;
+	throw std::runtime_error("Illegal opcode.");
+	return 0;
 }
 
 
@@ -1319,18 +1344,18 @@ uint8_t cpu::RLC(uint8_t &reg){
 
 uint8_t cpu::RLC_HLADDR(){
 
-	uint8_t tmp = memory[HL];
+	uint8_t tmp = (*memory)[HL];
 
 	if(tmp  & 1 << 7)
 		F |= CARRY_FLAG;
 	else
 		F &= ~CARRY_FLAG;
 
-	memory.write(HL, tmp << 1);
+	memory->write(HL, tmp << 1);
 	if(F & CARRY_FLAG)
-		memory.write(HL, memory[HL] | 1 << 0);
+		memory->write(HL, (*memory)[HL] | 1 << 0);
 
-	if(memory[HL] == 0)
+	if((*memory)[HL] == 0)
 		F |= ZERO_FLAG;
 	else
 		F &= ~ZERO_FLAG;
@@ -1368,19 +1393,19 @@ uint8_t cpu::RRC(uint8_t &reg){
 
 uint8_t cpu::RRC_HLADDR(){
 
-	uint8_t tmp = memory[HL];
+	uint8_t tmp = (*memory)[HL];
 
 	if(tmp  & 1 << 0)
 		F |= CARRY_FLAG;
 	else
 		F &= ~CARRY_FLAG;
 
-	memory.write(HL, tmp >> 1);
+	memory->write(HL, tmp >> 1);
 	if(F & CARRY_FLAG)
-		memory.write(HL, memory[HL] | 1 << 7);
+		memory->write(HL, (*memory)[HL] | 1 << 7);
 	
 
-	if(memory[HL] == 0)
+	if((*memory)[HL] == 0)
 		F |= ZERO_FLAG;
 	else
 		F &= ~ZERO_FLAG;
@@ -1420,7 +1445,7 @@ uint8_t cpu::RL(uint8_t &reg){
 
 uint8_t cpu::RL_HLADDR(){
 
-	uint8_t tmp = memory[HL];
+	uint8_t tmp = (*memory)[HL];
 	uint8_t bit = (F & CARRY_FLAG)? 1:0;
 
 	if(tmp  & 1 << 7)
@@ -1428,11 +1453,11 @@ uint8_t cpu::RL_HLADDR(){
 	else
 		F &= ~CARRY_FLAG;
 
-	memory.write(HL, tmp << 1);
+	memory->write(HL, tmp << 1);
 	if(bit == 1)
-		memory.write(HL, memory[HL] | 1 << 0);
+		memory->write(HL, (*memory)[HL] | 1 << 0);
 
-	if(memory[HL] == 0)
+	if((*memory)[HL] == 0)
 		F |= ZERO_FLAG;
 	else
 		F &= ~ZERO_FLAG;
@@ -1474,7 +1499,7 @@ uint8_t cpu::RR(uint8_t &reg){
 
 uint8_t cpu::RR_HLADDR(){
 
-	uint8_t tmp = memory[HL];
+	uint8_t tmp = (*memory)[HL];
 	uint8_t bit = (F & CARRY_FLAG)? 1:0;
 
 	if(tmp  & 1 << 0)
@@ -1482,11 +1507,11 @@ uint8_t cpu::RR_HLADDR(){
 	else
 		F &= ~CARRY_FLAG;
 
-	memory.write(HL, tmp >> 1);
+	memory->write(HL, tmp >> 1);
 	if(bit == 1)
-		memory.write(HL, memory[HL] | 1 << 7);
+		memory->write(HL, (*memory)[HL] | 1 << 7);
 
-	if(memory[HL] == 0)
+	if((*memory)[HL] == 0)
 		F |= ZERO_FLAG;
 	else
 		F &= ~ZERO_FLAG;
@@ -1521,16 +1546,16 @@ uint8_t cpu::SLA(uint8_t &reg){
 
 uint8_t cpu::SLA_HLADDR(){
 
-	uint8_t tmp = memory[HL];
+	uint8_t tmp = (*memory)[HL];
 
 	if(tmp  & 1 << 7)
 		F |= CARRY_FLAG;
 	else
 		F &= ~CARRY_FLAG;
 
-	memory.write(HL, tmp << 1);
+	memory->write(HL, tmp << 1);
 
-	if(memory[HL] == 0)
+	if((*memory)[HL] == 0)
 		F |= ZERO_FLAG;
 	else
 		F &= ~ZERO_FLAG;
@@ -1568,7 +1593,7 @@ uint8_t cpu::SRA(uint8_t &reg){
 
 uint8_t cpu::SRA_HLADDR(){
 
-	uint8_t tmp = memory[HL];
+	uint8_t tmp = (*memory)[HL];
 	uint8_t bit = (tmp & 1 << 7)? 1:0;
 
 	if(tmp  & 1 << 0)
@@ -1576,11 +1601,11 @@ uint8_t cpu::SRA_HLADDR(){
 	else
 		F &= ~CARRY_FLAG;
 
-	memory.write(HL, tmp >> 1);
+	memory->write(HL, tmp >> 1);
 	if(bit == 1)
-		memory.write(HL, memory[HL] | (1 << 7));
+		memory->write(HL, (*memory)[HL] | (1 << 7));
 
-	if(memory[HL] == 0)
+	if((*memory)[HL] == 0)
 		F |= ZERO_FLAG;
 	else
 		F &= ~ZERO_FLAG;
@@ -1612,11 +1637,11 @@ uint8_t cpu::SWAP(uint8_t &reg){
 
 uint8_t cpu::SWAP_HLADDR(){
 
-	uint8_t tmpl = memory[HL] & 0xF;
-	uint8_t tmph = memory[HL] & 0xF0;
-	memory.write(HL, (tmpl << 4) | (tmph >> 4));
+	uint8_t tmpl = (*memory)[HL] & 0xF;
+	uint8_t tmph = (*memory)[HL] & 0xF0;
+	memory->write(HL, (tmpl << 4) | (tmph >> 4));
 
-	if(memory[HL] == 0)
+	if((*memory)[HL] == 0)
 		F |= ZERO_FLAG;
 	else
 		F &= ~ZERO_FLAG;
@@ -1652,16 +1677,16 @@ uint8_t cpu::SRL(uint8_t &reg){
 
 uint8_t cpu::SRL_HLADDR(){
 
-	uint8_t tmp = memory[HL];
+	uint8_t tmp = (*memory)[HL];
 
 	if(tmp  & 1 << 0)
 		F |= CARRY_FLAG;
 	else
 		F &= ~CARRY_FLAG;
 
-	memory.write(HL, tmp >> 1);
+	memory->write(HL, tmp >> 1);
 
-	if(memory[HL] == 0)
+	if((*memory)[HL] == 0)
 		F |= ZERO_FLAG;
 	else
 		F &= ~ZERO_FLAG;
@@ -1690,7 +1715,7 @@ uint8_t cpu::BIT(const uint8_t bit, const uint8_t reg){
 
 uint8_t cpu::BIT_HLADDR(const uint8_t bit){
 
-	if(memory[HL] & 1 << bit)
+	if((*memory)[HL] & 1 << bit)
 		F &= ~ZERO_FLAG;
 	else
 		F |= ZERO_FLAG;
@@ -1698,7 +1723,7 @@ uint8_t cpu::BIT_HLADDR(const uint8_t bit){
 	F &= ~SUBTRACT_FLAG;
 	F |= HALF_CARRY_FLAG;
 
-	return 16;
+	return 12; 
 }
 
 uint8_t cpu::RES(const uint8_t bit, uint8_t &reg){
@@ -1708,7 +1733,7 @@ uint8_t cpu::RES(const uint8_t bit, uint8_t &reg){
 
 	
 uint8_t cpu::RES_HLADDR(const uint8_t bit){
-	memory.write(HL, memory[HL] & ~(1 << bit));
+	memory->write(HL, (*memory)[HL] & ~(1 << bit));
 	return 16;
 }
 
@@ -1718,7 +1743,7 @@ uint8_t cpu::SET(const uint8_t bit, uint8_t &reg){
 }
 	
 uint8_t cpu::SET_HLADDR(const uint8_t bit){
-	memory.write(HL, memory[HL] | (1 << bit));
+	memory->write(HL, (*memory)[HL] | (1 << bit));
 	return 16;
 }
 

@@ -29,7 +29,6 @@ enum state{
 
 
 
-
 class cpu{
 
 private:
@@ -44,11 +43,13 @@ carry flag (4 most significant bits)
 // 16 bit registers
 	uint16_t SP, PC;
 
-	_memory memory;
+	_memory* memory;
 
 	state _state;
 
 	bool IME; //Interrupt Master Enable
+
+	bool EI_scheduled;
 	
 	const uint8_t interrupt_address[5] = {0x40, 0x48, 0x50, 0x58, 0x60};
 
@@ -827,11 +828,12 @@ uint8_t (cpu::**CB_array)();
 	
 public:
 
-	cpu(_memory& mem);
+	cpu(_memory* mem);
 	~cpu();
-	uint8_t decode(); //{return memory[PC++];}
-	uint8_t execute(const uint8_t opcode){return (this->*opcode_array[opcode])();} 
-	void handle_interrupts(uint8_t addr);
+	uint8_t decode(); 
+	uint8_t execute(const uint8_t opcode);
+	bool handle_interrupts(uint8_t addr);
+	void test(){for(int i = 1; i <= 256; ++i){std::cout << (int)(this->*opcode_array[i-1])()/4 << " "; if(i%16==0) std::cout << std::endl;}}
 	uint8_t** regs;
 	uint16_t** regs16;
 
