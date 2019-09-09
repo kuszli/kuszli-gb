@@ -25,6 +25,7 @@ struct _sprite{
 	uint8_t* tile_data;
 	bool h_flip;
 	bool v_flip;
+	bool priority_over_bg;
 
 };
 
@@ -39,6 +40,7 @@ class lcd_driver{
 	const uint16_t cycles_per_scanline = 456;
 	const uint8_t scanlines_until_vblank = 144;
 	const uint8_t scanlines_end = 154;	
+	const uint8_t cycles_per_sprite = 12;
 	const uint8_t LYC_match_flag = 1 << 2;
 	const uint8_t LYC_interrupt_select = 1 << 6;
 
@@ -52,21 +54,24 @@ class lcd_driver{
 	uint8_t* oam;
 	uint8_t* line_buffer;
 	uint8_t** screen_buffer;
+	uint8_t** oam_debug_buffer;
 	std::vector<uint8_t>* sprites_cont;
 	std::priority_queue<uint8_t, std::vector<uint8_t>, compare>* visible_sprites;
 	std::deque<uint8_t>* pixel_fifo;
 	_sprite sprite;
 
-	uint16_t mode_counter[4] = {0};
-	uint16_t mode_cycles[4] = {80, 172, 204, 4560};
+	int16_t mode_counter[4] = {0};
+	uint16_t mode_cycles[4] = {80, 288, 208, 4560};
 	uint8_t mode_flags[4] = {2,3,0,1};
 	uint8_t interrupt_selection_flags[4] = {(1 << 5), 0, (1 << 3), (1 << 4)};
 
 	uint8_t mode;
+	uint8_t cycles_to_add;
 	uint16_t LY_counter;
-
+	uint8_t old_stat_signal;
 
 	void generate_interrupt(interrupt_type t);
+	void check_for_interrupts();
 	void inc_LY();
 	void switch_mode();
 
@@ -83,19 +88,21 @@ class lcd_driver{
 	uint8_t get_color_rev(const uint8_t* tile_data, const uint8_t px);
 	void search_oam();
  	void fill_fifo_bgwin(const uint8_t* bg_map, const uint8_t* bg_data, uint16_t block, const bool windowing);
-	void fill_fifo_oam(const uint8_t oam_idx, const uint8_t* bg_map, const uint8_t* bg_data, uint16_t block, const bool windowing);
+	void fill_fifo_oam(const uint8_t oam_idx, const uint8_t shift);
 	void update_sprite(const uint8_t oam_idx);
 	
-
+	uint8_t blank_tile[16] = {0};
+	void debug_draw_oam();
 //	bool compare(uint8_t A, uint8_t B){ return oam[4*A+1] > oam[4*B+1]; }
 
 public:
 
-	lcd_driver(_memory& mem);
+	lcd_driver(_memory* mem);
 	~lcd_driver();
 	void update(const uint8_t cycles);
 	uint8_t debug(){ return lcd_registers[LY]; }
 	uint8_t** const screen(){ return screen_buffer; }
+	uint8_t** const oam_screen(){ return oam_debug_buffer; }
 
 
 };
