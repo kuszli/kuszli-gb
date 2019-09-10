@@ -1,6 +1,7 @@
 #include "lcd_driver.hh"
 
 lcd_driver::lcd_driver(_memory* mem){
+
 	lcd_registers = &(*mem)[LCD_REGS_MEMORY_ADDR];
 	IF = &(*mem)[IF_REGISTER];
 
@@ -17,10 +18,12 @@ lcd_driver::lcd_driver(_memory* mem){
 
 	lcd_registers[STAT] &= 0xFC; //clear mode flags
 	lcd_registers[STAT] |= mode_flags[0];
+
 	mode = 0;
 	LY_counter = 0;
 	old_stat_signal = 0;
 	oam_search_done = false;
+
 	screen_buffer = new uint8_t*[144];
 
 	for(int i = 0; i < 144; ++i){
@@ -36,6 +39,7 @@ lcd_driver::lcd_driver(_memory* mem){
 
 
 lcd_driver::~lcd_driver(){
+
 	delete[] screen_buffer;
 	delete[] oam_debug_buffer;
 	delete sprites_cont;
@@ -65,23 +69,23 @@ void lcd_driver::update_sprite(const uint8_t oam_idx){
 	else
 		sprite.tile = oam[oam_idx*4 + 2];
 
-
 	sprite.palette = oam[oam_idx*4 + 3] & 1 << 4 ? &lcd_registers[OBP1] : &lcd_registers[OBP0];
-
 	sprite.tile_data = &vram1[sprite.tile * 16 + sprite.line * 2];
-
 
 }
 
 void inline lcd_driver::draw_pixel(const uint8_t color){
+
 	screen_buffer[lcd_registers[LY]][curr_px++] = color;
 }
 
 uint8_t inline lcd_driver::get_pixel(const uint8_t* pal, const uint8_t color){
+
 	return (*pal & (0x3 << color * 2)) >> color*2;
 }
 
 uint8_t lcd_driver::get_color(const uint8_t* tile_data, const uint8_t px){
+
 	uint8_t colorA, colorB;
 
 	colorA = (tile_data[0] & 1 << (7-px)) ? 1 : 0;
@@ -92,6 +96,7 @@ uint8_t lcd_driver::get_color(const uint8_t* tile_data, const uint8_t px){
 
 
 uint8_t lcd_driver::get_color_rev(const uint8_t* tile_data, const uint8_t px){
+
 	uint8_t colorA, colorB;
 
 	colorA = (tile_data[0] & 1 << (px)) ? 1 : 0;
@@ -106,10 +111,10 @@ void lcd_driver::fill_fifo_bgwin(const uint8_t* bg_map, const uint8_t* bg_data, 
 		
 	const uint8_t* block_line_data;
 	uint8_t pal;
-
-	uint8_t line;  
+	uint8_t line; 
+ 
 	if(windowing)
-		line = (lcd_registers[LY] - lcd_registers[WY] ) % 8;
+		line = (lcd_registers[LY] - lcd_registers[WY]) % 8;
 	else
 		line = (lcd_registers[SCY] +lcd_registers[LY]) % 8;
 
@@ -150,7 +155,6 @@ void lcd_driver::fill_fifo_oam(const uint8_t oam_idx, const uint8_t shift = 0){
 		else{
 			if((pixel_fifo->at(i-shift) & 0x3) == (lcd_registers[BGP] & 0x3))
 				pixel_fifo->at(i-shift) = get_pixel(sprite.palette, pal) | (oam_idx << 2);
-
 		}
 	}
 
@@ -162,30 +166,23 @@ void lcd_driver::fill_fifo_oam(const uint8_t oam_idx, const uint8_t shift = 0){
 void lcd_driver::search_oam(){
 
 	while(!visible_sprites->empty())
-		visible_sprites->pop(); //it should always be empty, but it's different...
-
-	if(!(lcd_registers[LCDC] & 1 << 1)) // obj off
-		return;
+		visible_sprites->pop(); //it should always be empty, but sometimes it contains garbage
 	
 	uint8_t sprite_size = lcd_registers[LCDC] & 1 << 2 ? 16 : 8;
-	uint8_t counter = 0;
 	
-
 	for(uint8_t i = 0; i < OAM_SIZE; i+=4){
 		if((lcd_registers[LY] >= (oam[i] - 16)) && (lcd_registers[LY] < (oam[i] + sprite_size - 16))){
 			visible_sprites->push(i/4);
-			++counter;
-			if(counter == 10)
+			if(visible_sprites->size() == 10)
 				break;
 		}
 	}
-
-	
 
 }
 			
 
 uint8_t lcd_driver::find_common_line(const uint8_t oam_index){
+
 	int16_t top_line = oam[oam_index*4] - 16;
 	uint8_t sprite_size = lcd_registers[LCDC] & 1 << 2 ? 16 : 8;
 	uint8_t common_line = 0;
@@ -198,7 +195,6 @@ uint8_t lcd_driver::find_common_line(const uint8_t oam_index){
 	}
 
 	return common_line;
-
 }
 
 
@@ -213,83 +209,82 @@ void lcd_driver::draw_blank_line(){
 	
 void lcd_driver::draw_line(){
 	
-	mode_counter[mode] += (10 - visible_sprites->size()) * cycles_per_sprite;
-	cycles_to_add = visible_sprites->size() * cycles_per_sprite;
+	mode_counter[mode] += (10 - visible_sprites->size()) * cycles_per_sprite; //adjust mode 3 timing 
+	cycles_to_add = visible_sprites->size() * cycles_per_sprite; 
 
 	bool windowing = false;
+
 	uint8_t* bg_tile_data = (lcd_registers[LCDC] & 1 << 4) ? vram1 : vram2;
 	uint8_t* bg_tile_nums =  (lcd_registers[LCDC] & 1 << 3) ? chr_code2 : chr_code1;
 	uint8_t* window_tile_nums = (lcd_registers[LCDC] & 1 << 6) ? chr_code2 : chr_code1;
+
 	uint16_t block = ( ((lcd_registers[SCY] + lcd_registers[LY]) % 256) / 8) * 32 + lcd_registers[SCX]/8;
 	uint16_t row = (block/32 + 1)*32;
 	uint8_t line =  (lcd_registers[SCY] +lcd_registers[LY]) % 8;
+
 	uint8_t* block_line_data;
 	uint8_t* curr_nums;
 	uint8_t oam_idx;
 	uint8_t oam_x;
 	uint8_t x_off = lcd_registers[SCX] % 8;
 	uint8_t length = 32;
+
 	curr_px = 0;
 	curr_nums = bg_tile_nums;
-	pixel_fifo->clear();
+	pixel_fifo->clear(); //we don't need old pixels
 
 	fill_fifo_bgwin(curr_nums, bg_tile_data, block, windowing);
 	
 	for(uint8_t i = 0; i < x_off; ++i){
-		pixel_fifo->pop_front();
+		pixel_fifo->pop_front(); //x scrolling
 	}
 
 	while(curr_px < 160){
 
-
-		if(pixel_fifo->size() < 9){ //fetch
+		if(pixel_fifo->size() < 9){ //fetch if fifo contains less than 9 pixels
 			++block;
 			if(block == row)
 				block = row - 32;
 			fill_fifo_bgwin(curr_nums, bg_tile_data, block, windowing);
 		}
 
-		if(!windowing){
+		if(!windowing){ 
 			if(lcd_registers[LCDC] & 1 << 5){ //window enable
-				if((curr_px >= lcd_registers[WX] - 7) && (lcd_registers[WY] <= lcd_registers[LY])){
-					pixel_fifo->clear();
-					curr_nums = window_tile_nums;
+				if((curr_px >= lcd_registers[WX] - 7) && (lcd_registers[WY] <= lcd_registers[LY])){ //window coordinates
+					pixel_fifo->clear(); //prepare place for window tiles
+					curr_nums = window_tile_nums; //switch to window tiles
 					block = ((lcd_registers[LY] - lcd_registers[WY])/8) * 32;
 					windowing = true;
 					fill_fifo_bgwin(curr_nums, bg_tile_data, block, windowing);
-
 				}
-
 			}
-
 		}
-	  
-		if(!visible_sprites->empty()){ //there are objs to draw	
+
+		if(!visible_sprites->empty() && (lcd_registers[LCDC] & 1 << 1)){ //there are objs to draw	
 			oam_idx = visible_sprites->top();
 			oam_x = oam[oam_idx*4+1];
+
 			while(oam_x < 8 && !visible_sprites->empty()){ //draw sprites partially hidden
 				fill_fifo_oam(oam_idx, 8 - oam_x);
 				oam_idx = visible_sprites->top();
 				oam_x = oam[oam_idx*4+1];
 			}
+
 			while(curr_px == oam_x - 8 && !visible_sprites->empty() ){ //draw entire sprites
 				fill_fifo_oam(oam_idx);
 				oam_idx = visible_sprites->top();
 				oam_x = oam[oam_idx*4+1];
-			}
-			
+			}			
 		}
 
-		draw_pixel(pixel_fifo->front() & 0x3); //push
-		pixel_fifo->pop_front();
-		
+		draw_pixel(pixel_fifo->front() & 0x3); //push (place pixels on screen)
+		pixel_fifo->pop_front();		
 
 	}
-
 }
 		
 
-void lcd_driver::debug_draw_oam(){
+void lcd_driver::debug_draw_oam(){ 
 
 	if(lcd_registers[LY] >= 128)
 		return;
@@ -359,8 +354,14 @@ void lcd_driver::inc_LY(){
 	if(lcd_registers[LY] == scanlines_end){
 		lcd_registers[LY] = 0;
 		}
-
 }
+
+void inline lcd_driver::update_mode(){
+
+	lcd_registers[STAT] &= 0xFC; //clear first 2 bits
+	lcd_registers[STAT] |= mode_flags[mode]; 
+}
+
 
 void lcd_driver::switch_mode(){
 
@@ -369,7 +370,7 @@ void lcd_driver::switch_mode(){
 
 		case 0:{
 			oam_search_done = false;
-			mode = 1; //drawing
+			mode = 1; //draw pixels
 			draw_line();
 			debug_draw_oam();
 			break;
@@ -377,16 +378,16 @@ void lcd_driver::switch_mode(){
 
 		case 1:{
 			mode = 2; //hblank
-			mode_counter[mode] += cycles_to_add;
+			mode_counter[mode] += cycles_to_add; //hblank time depends on previous mode timing
 			cycles_to_add = 0;
 			break;
 		}
 
 		case 2:{
 			inc_LY();
-			if(lcd_registers[LY] == scanlines_until_vblank){ //vblank time!
+			if(lcd_registers[LY] == scanlines_until_vblank){ 
 				LY_counter = 0;
-				mode = 3; 
+				mode = 3; //vblank time!
 				generate_interrupt(vblank);
 			}
 			else
@@ -397,7 +398,7 @@ void lcd_driver::switch_mode(){
 		case 3:{
 			if(lcd_registers[LY] != 0 )
 				lcd_registers[LY] = 0;
-			mode = 0;
+			mode = 0; //oam search
 			break;
 		}
 		
@@ -405,8 +406,8 @@ void lcd_driver::switch_mode(){
 			break;
 
 	}
-	lcd_registers[STAT] &= 0xFC; //clear first 2 bits
-	lcd_registers[STAT] |= mode_flags[mode]; 
+
+	update_mode();
 	
 }
 
@@ -414,7 +415,9 @@ void lcd_driver::switch_mode(){
 
 void lcd_driver::update(uint8_t cycles){
 
-	if(!(lcd_registers[LCDC] & 1 << 7)){
+	if(!(lcd_registers[LCDC] & 1 << 7)){ //lcd off?
+		mode = 0;
+		mode_counter[mode] = 0;
 		return;
 	}
 
@@ -428,12 +431,14 @@ void lcd_driver::update(uint8_t cycles){
 			}
 			break;
 		}
+
 		case 3:{
+
 			LY_counter += cycles;
 			if(LY_counter >= cycles_per_scanline){
 				inc_LY();
 				if(lcd_registers[LY] == 153)
-					LY_counter = 452;
+					LY_counter = 452; //153rd line last very short
 				else
 					LY_counter = 0;
 			}
@@ -444,17 +449,14 @@ void lcd_driver::update(uint8_t cycles){
 			break;
 	}
 
-
 	mode_counter[mode] += cycles;
 
 	if(mode_counter[mode] >= mode_cycles[mode]){
 		mode_counter[mode] = 0;	
 		switch_mode();
-
 	}
 
-	check_for_interrupts();
-			
+	check_for_interrupts();			
 }
 
 

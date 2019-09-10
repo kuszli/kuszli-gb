@@ -26,7 +26,6 @@ struct _sprite{
 	bool h_flip;
 	bool v_flip;
 	bool priority_over_bg;
-
 };
 
 enum interrupt_type{
@@ -44,7 +43,6 @@ class lcd_driver{
 	const uint8_t LYC_match_flag = 1 << 2;
 	const uint8_t LYC_interrupt_select = 1 << 6;
 
-	bool oam_search_done;
 	uint8_t* lcd_registers;
 	uint8_t* IF;
 	uint8_t* vram1;
@@ -64,20 +62,20 @@ class lcd_driver{
 	uint16_t mode_cycles[4] = {80, 288, 208, 4560};
 	uint8_t mode_flags[4] = {2,3,0,1};
 	uint8_t interrupt_selection_flags[4] = {(1 << 5), 0, (1 << 3), (1 << 4)};
+	uint8_t blank_tile[16] = {0};
 
+	bool oam_search_done;
 	uint8_t mode;
 	uint8_t cycles_to_add;
 	uint16_t LY_counter;
 	uint8_t old_stat_signal;
+	uint8_t curr_px;
 
 	void generate_interrupt(interrupt_type t);
 	void check_for_interrupts();
 	void inc_LY();
 	void switch_mode();
-
 	uint8_t find_common_line(const uint8_t oam_index);
-	
-	uint8_t curr_px;
 	void draw_blank_line();
 	void draw_line();
 	void draw_sprite_line(const uint8_t oam_idx, const uint8_t* block_line_data, const uint8_t block, const uint8_t blocks_to_draw);
@@ -90,10 +88,9 @@ class lcd_driver{
  	void fill_fifo_bgwin(const uint8_t* bg_map, const uint8_t* bg_data, uint16_t block, const bool windowing);
 	void fill_fifo_oam(const uint8_t oam_idx, const uint8_t shift);
 	void update_sprite(const uint8_t oam_idx);
-	
-	uint8_t blank_tile[16] = {0};
+	void update_mode();
 	void debug_draw_oam();
-//	bool compare(uint8_t A, uint8_t B){ return oam[4*A+1] > oam[4*B+1]; }
+
 
 public:
 
@@ -104,12 +101,7 @@ public:
 	uint8_t** const screen(){ return screen_buffer; }
 	uint8_t** const oam_screen(){ return oam_debug_buffer; }
 
-
 };
-
-
-
-
 
 
 #endif
