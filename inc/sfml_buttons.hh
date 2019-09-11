@@ -18,8 +18,7 @@ class sfml_buttons{
 
 public:
 	static void read(uint8_t &button);
-
-
+	static void clear(uint8_t &button){button = 0;}
 
 };
 

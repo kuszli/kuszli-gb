@@ -13,7 +13,8 @@ class interrupts{
 
 public:
 
-	interrupts(_memory& mem);
+	interrupts(_memory* mem);
+	~interrupts(){delete IF; delete IE;}
 	uint8_t check();
 
 };

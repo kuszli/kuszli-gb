@@ -6,12 +6,15 @@
 #include "timer.hh"
 #include "lcd_driver.hh"
 #include "interrupts.hh"
+#include "memory.hh"
 
 class gameboy{
 
 	const uint16_t cycles_per_frame = 70224;
+	uint8_t cycles;
+	uint8_t button;
 
-	uint8_t *memory;
+	_memory* memory;
 	cpu* _cpu;
 	timer* _timer;
 	lcd_driver* _lcd_driver;
@@ -21,20 +24,10 @@ class gameboy{
 public:
 	gameboy();
 	~gameboy();
-	void run();
+	void set_buttons(uint8_t butt) const;
+	void run() const;
 
 };
-
-
-
-
-
-
-
-
-
-
-
 
 
 

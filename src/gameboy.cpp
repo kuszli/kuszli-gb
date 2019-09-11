@@ -3,7 +3,7 @@
 
 
 gameboy::gameboy(){
-	memory = new uint8_t[65536];
+	memory = new _memory;
 	_cpu = new cpu(memory);
 	_timer = new timer(memory);
 	_lcd_driver = new lcd_driver(memory);
@@ -12,7 +12,11 @@ gameboy::gameboy(){
 
 
 gameboy::~gameboy(){
-	delete[] memory;
+
+	if(memory != nullptr){
+		delete[] memory;
+		memory = nullptr;
+	}
 	delete _cpu;
 	delete _timer;
 	delete _lcd_driver;

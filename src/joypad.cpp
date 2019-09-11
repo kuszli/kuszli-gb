@@ -1,14 +1,16 @@
 #include "joypad.hh"
 
-joypad::joypad(_memory &mem){
-	joypad_register = &mem[JOYPAD];
+joypad::joypad(_memory* mem){
+	joypad_register = &(*mem)[JOYPAD];
 	*joypad_register = 0x3F;
+	IF = &(*mem)[IF_REGISTER];
 	button = 0;
+	last_state = 0xF;
 }
 
 
 void joypad::update(uint8_t butt){
-//	std::cout << std::hex << (int) *joypad_register << std::endl;
+
   *joypad_register |= 0xF;
 	uint8_t tmp = keys_select();
 
@@ -20,7 +22,10 @@ void joypad::update(uint8_t butt){
 		*joypad_register &= ~((butt >> 4) & 0xF);
 	}
 
-
+	if((*joypad_register & 0xF) != 0xF && last_state == 0xF) //high to low transition
+		*IF |= BUTTON_INT;
+	last_state = *joypad_register & 0xF;
+	
 }
 
 void joypad::write(uint8_t butt){

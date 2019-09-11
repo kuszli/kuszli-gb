@@ -24,13 +24,14 @@ class timer{
 	
 	uint8_t* IF_register;
 	uint8_t* timer_registers;
+	uint8_t* system_counter;
 	uint8_t old_TAC;
 	uint32_t clock_speed_hz[4]{4096, 262144, 65536, 16384}; //in Hz
 	uint16_t clock_speed_cyc[4]{1024, 16, 64, 256}; //in cycles
 
 	uint16_t divider_counter;
 	uint16_t timer_counter;
-
+	bool overflow_flag;
 	void count_divider();
 	void count_timer();
 	void overflow();	
@@ -39,7 +40,7 @@ class timer{
 
 public:
 	
-	timer(_memory& mem);
+	timer(_memory* mem);
 	void update(const uint8_t cycles);
 
 	

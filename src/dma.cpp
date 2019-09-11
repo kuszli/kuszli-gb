@@ -24,15 +24,15 @@ void dma::update(uint8_t cycles){
 	if(memory->dma_request){
 		counter = 0;
 		memory->dma_request = false;
-		dma_time = true;
+		memory->dma_time = true;
 	}
 
-	if(dma_time){
+	if(memory->dma_time){
 		counter += cycles;
 		if(counter >= transfer_time){
 			transfer();
 			counter = 0;
-			dma_time = false;
+			memory->dma_time = false;
 		}	
 	}
 

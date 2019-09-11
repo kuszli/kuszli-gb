@@ -187,12 +187,12 @@ void _memory::write(const uint16_t index, const uint8_t value){
 
 	if(index < 0x8000)
 		write_to_mbc(index, value);
-
+/*
 	else if(index >= 0x8000 && index < 0xA000){ //vram
-		if((memory[0xFF41] & 0x3) < 0x3)
+		if((memory[0xFF41] & 0x3) != 0x3)
 			memory[index] = value;
 	}
-
+*/
 	else if((index >= 0xA000 && index < 0xC000))
 		write_to_ex_ram(index, value);
 	
@@ -431,6 +431,7 @@ void _memory::save_ram(){
 	save.close();
 
 }
+
 void _memory::load_ram(){
 
 	if(!ex_ram)

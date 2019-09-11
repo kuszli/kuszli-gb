@@ -1,8 +1,8 @@
 #include "interrupts.hh"
 
-interrupts::interrupts(_memory& mem){
-	IF = &mem[IF_REGISTER];
-	IE = &mem[IE_REGISTER];
+interrupts::interrupts(_memory* mem){
+	IF = &(*mem)[IF_REGISTER];
+	IE = &(*mem)[IE_REGISTER];
 
 }
 

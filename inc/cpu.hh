@@ -833,7 +833,7 @@ public:
 	uint8_t decode(); 
 	uint8_t execute(const uint8_t opcode);
 	bool handle_interrupts(uint8_t addr);
-	void test(){for(int i = 1; i <= 256; ++i){std::cout << (int)(this->*opcode_array[i-1])()/4 << " "; if(i%16==0) std::cout << std::endl;}}
+
 	uint8_t** regs;
 	uint16_t** regs16;
 

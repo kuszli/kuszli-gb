@@ -29,7 +29,6 @@ class _memory{
 	bool mbc;
 	bool ex_ram;
 	bool ram_enable;
-	bool dma_time;
 	uint8_t mode_select;
 	uint16_t available_rom_banks;
 	uint8_t available_ram_banks;
@@ -60,7 +59,7 @@ public:
 	~_memory();
 
 	bool dma_request;
-
+	bool dma_time;
 	uint8_t& operator[](const uint16_t index);
 	const uint8_t& operator[](const uint16_t index) const;
 	uint8_t read(const uint16_t index){ return memory[index];}
