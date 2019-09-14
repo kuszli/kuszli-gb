@@ -26,6 +26,7 @@ class _memory{
 	uint8_t latch;
 	uint8_t dummy;
 	uint8_t ram_type;	
+	bool rom_connected;
 	bool mbc;
 	bool ex_ram;
 	bool ram_enable;
@@ -54,14 +55,14 @@ class _memory{
 
 public:
 
-	_memory(const std::string& rom_name);
-	_memory(){}
+	_memory();
 	~_memory();
 
 	bool dma_request;
 	bool dma_time;
 	uint8_t& operator[](const uint16_t index);
 	const uint8_t& operator[](const uint16_t index) const;
+	void connect_rom(const std::string&);
 	uint8_t read(const uint16_t index){ return memory[index];}
 	void write(const uint16_t index, const uint8_t value);
 	void save_ram();

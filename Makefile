@@ -4,7 +4,7 @@ OBJ = obj
 SRC = src
 INC = -I inc
 
-OBJS = $(OBJ)/main.o $(OBJ)/cpu.o $(OBJ)/interrupts.o $(OBJ)/lcd_driver.o $(OBJ)/timer.o $(OBJ)/memory.o $(OBJ)/joypad.o $(OBJ)/dma.o $(OBJ)/sfml_buttons.o $(OBJ)/sfml_interface.o
+OBJS = $(OBJ)/main.o $(OBJ)/gameboy.o $(OBJ)/cpu.o $(OBJ)/interrupts.o $(OBJ)/lcd_driver.o $(OBJ)/timer.o $(OBJ)/memory.o $(OBJ)/joypad.o $(OBJ)/dma.o $(OBJ)/sfml_buttons.o $(OBJ)/sfml_interface.o $(OBJ)/cmd_options.o
 
 
 kuszli-gb: $(OBJS)
@@ -12,6 +12,9 @@ kuszli-gb: $(OBJS)
 
 $(OBJ)/main.o: $(SRC)/main.cpp
 	g++ $(CXXFLAGS) $(INC) $(SRC)/main.cpp -o $(OBJ)/main.o
+
+$(OBJ)/gameboy.o: $(SRC)/gameboy.cpp
+	g++ $(CXXFLAGS) $(INC) $(SRC)/gameboy.cpp -o $(OBJ)/gameboy.o
 
 $(OBJ)/cpu.o: $(SRC)/cpu.cpp 
 	g++ $(CXXFLAGS) $(INC) $(SRC)/cpu.cpp -o $(OBJ)/cpu.o
@@ -39,6 +42,9 @@ $(OBJ)/sfml_buttons.o: $(SRC)/sfml_buttons.cpp
 
 $(OBJ)/sfml_interface.o: $(SRC)/sfml_interface.cpp
 	g++ $(CXXFLAGS) $(INC) $(SRC)/sfml_interface.cpp -o $(OBJ)/sfml_interface.o
+
+$(OBJ)/cmd_options.o: $(SRC)/cmd_options.cpp
+	g++ $(CXXFLAGS) $(INC) $(SRC)/cmd_options.cpp -o $(OBJ)/cmd_options.o
 
 clean:
 	rm $(OBJ)/*.o

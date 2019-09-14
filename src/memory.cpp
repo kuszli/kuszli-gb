@@ -1,18 +1,47 @@
 #include "memory.hh"
 
-_memory::_memory(const std::string& rom_name){
+_memory::_memory(){
 
 	memory = new uint8_t[65536];
-
-	bank_select1 = 1;
-	bank_select2 = 0;
-	bank_select3 = 0;
+	rom_connected = false;
 	dummy = 0xFF;
 	dma_time = false;
 	dma_request = false;
 	external_ram = nullptr;
 	rom_banks = nullptr;
 	ram_enable = false;
+	mbc_type = none;
+
+}
+
+_memory::~_memory(){
+
+	delete[] memory;
+	memory = nullptr;
+
+	delete[] rom_banks;
+	rom_banks = nullptr;
+	
+	rom->close();
+	rom = nullptr;
+
+	delete[] external_ram;
+	external_ram = nullptr;
+	
+	delete[] rtc_registers;
+	rtc_registers = nullptr;
+
+	save_ram();
+
+}
+
+void _memory::connect_rom(const std::string& rom_name){
+
+	bank_select1 = 1;
+	bank_select2 = 0;
+	bank_select3 = 0;
+
+
 	mode_select = 0;
 	rtc_registers = new uint8_t[5];
 	_rom_name = rom_name;
@@ -44,8 +73,7 @@ _memory::_memory(const std::string& rom_name){
 		mbc_type = mbc3;
 	else if(memory[0x147] >= 0x19 && memory[0x147] < 0x1F)
 		mbc_type = mbc5;
-	else
-		mbc_type = none;
+
 
 	rom_size = length;
 	ram_type = memory[0x149];
@@ -66,41 +94,12 @@ _memory::_memory(const std::string& rom_name){
 
 	available_rom_banks = rom_size / 0x4000;
 	available_ram_banks = ram_type < 3 ? 1 : ram_size / 0x2000;
+	rom_connected = true;
 
 	load_ram();
 
-}
-
-_memory::~_memory(){
-
-	if(memory != nullptr){
-		delete[] memory;
-		memory = nullptr;
-	}
-
-	if(rom_banks != nullptr){
-		delete[] rom_banks;
-		rom_banks = nullptr;
-	}
-
-	if(rom != nullptr){
-		rom->close();
-		rom = nullptr;
-	}
-
-	if(external_ram != nullptr){
-		delete[] external_ram;
-		external_ram = nullptr;
-	}
-
-	if(rtc_registers != nullptr){
-		delete[] rtc_registers;
-		rtc_registers = nullptr;
-	}
 
 }
-
-
 
 uint16_t _memory::curr_rom_bank() const{
 
