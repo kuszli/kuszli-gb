@@ -33,7 +33,8 @@ public:
 	void set_buttons(uint8_t butt){button = butt;}
 	void run();
 	void insert_cart(const std::string& game_name){memory->connect_rom(game_name);}
-	void pull_out_cart() {memory->disconnect_rom();}
+	void pull_out_cart();
+	void reset() {_cpu->reset();}
 	uint8_t** get_display_data() const {return _lcd_driver->screen();}
 	uint8_t** oam_debug() const {return _lcd_driver->oam_screen();}
 

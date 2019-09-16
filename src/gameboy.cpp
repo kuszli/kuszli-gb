@@ -45,6 +45,12 @@ void gameboy::run(){
 
 
 }
+
+
+void gameboy::pull_out_cart(){
+	_cpu->reset();
+	memory->disconnect_rom();
+}
 	
 		
 	

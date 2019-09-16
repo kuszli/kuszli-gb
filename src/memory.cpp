@@ -118,12 +118,24 @@ void _memory::disconnect_rom(){
 	
 	std::memset((void*)memory, 0, 0x8000);
 	delete rtc_registers;
-	rom->close();
+	rtc_registers = nullptr;
+
+	if(rom != nullptr){
+		rom->close();
+		rom = nullptr;
+	}
+
 	delete rom_banks;
+	rom_banks = nullptr;
+
 	delete external_ram;
+	external_ram = nullptr;
+
 	mbc_type = none;
 	ex_ram = false;
 
+	dma_time = false;
+	dma_request = false;
 }
 
 uint16_t _memory::curr_rom_bank() const{

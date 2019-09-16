@@ -824,6 +824,7 @@ uint8_t CBinstFF();
 uint8_t (cpu::**opcode_array)();	
 uint8_t (cpu::**CB_array)();	
 
+void init_registers();
 //******************************************************************************
 	
 public:
@@ -833,7 +834,7 @@ public:
 	uint8_t decode(); 
 	uint8_t execute(const uint8_t opcode);
 	bool handle_interrupts(uint8_t addr);
-
+	void reset();
 	uint8_t** regs;
 	uint16_t** regs16;
 

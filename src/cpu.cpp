@@ -4,31 +4,20 @@
 
 
 cpu::cpu(_memory* mem){
-memory = mem;
-IME = false;
-_state = running;
 
-opcode_array = new (uint8_t (cpu::*[256])()){ OP_ARRAY };
+	memory = mem;
+	IME = false;
+	EI_scheduled = false;
+	_state = running;
 
-CB_array = new (uint8_t (cpu::*[256])()){ CB_ARRAY };
+	init_registers();
 
-PC = 0x100;
-SP = 0xFFFE;
-A = 1;
-F = 0xB0;
-B = 0;
-C = 0x13;
-D = 0;
-E = 0xD8;
-H = 1;
-L = 0x4D;
+	opcode_array = new (uint8_t (cpu::*[256])()){ OP_ARRAY };
 
-(*memory)[0xFF40] = 0x91;
+	CB_array = new (uint8_t (cpu::*[256])()){ CB_ARRAY };
 
-regs = new uint8_t*[8]{&A,&F,&B,&C,&D,&E,&H,&L};
-regs16 = new uint16_t*[2]{&SP,&PC};
-
-EI_scheduled = false;
+	regs = new uint8_t*[8]{&A,&F,&B,&C,&D,&E,&H,&L};
+	regs16 = new uint16_t*[2]{&SP,&PC};
 
 }
 
@@ -38,6 +27,24 @@ cpu::~cpu(){
 	delete[] CB_array;
 	CB_array = nullptr;
 }
+
+void cpu::init_registers(){
+	
+	PC = 0x100;
+	SP = 0xFFFE;
+	A = 1;
+	F = 0xB0;
+	B = 0;
+	C = 0x13;
+	D = 0;
+	E = 0xD8;
+	H = 1;
+	L = 0x4D;
+	(*memory)[0xFF40] = 0x91;
+
+}
+
+
 
 bool cpu::handle_interrupts(uint8_t id){
 
@@ -80,6 +87,17 @@ uint8_t cpu::decode(){
 uint8_t cpu::execute(const uint8_t opcode){
 	return (this->*opcode_array[opcode])();
 }
+
+
+void cpu::reset(){
+
+	IME = false;
+	EI_scheduled = false;
+	_state = running;
+	init_registers();
+
+}
+	
 	
 //*********generic cpu::instructions*********************************************
 
