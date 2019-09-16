@@ -7,14 +7,19 @@ _memory::_memory(){
 	dummy = 0xFF;
 	dma_time = false;
 	dma_request = false;
+	rom = nullptr;
 	external_ram = nullptr;
 	rom_banks = nullptr;
+	rtc_registers = nullptr;
 	ram_enable = false;
+	ex_ram = false;
 	mbc_type = none;
 
 }
 
 _memory::~_memory(){
+
+	save_ram();
 
 	delete[] memory;
 	memory = nullptr;
@@ -22,16 +27,16 @@ _memory::~_memory(){
 	delete[] rom_banks;
 	rom_banks = nullptr;
 	
-	rom->close();
-	rom = nullptr;
+	if(rom != nullptr){
+		rom->close();
+		rom = nullptr;
+	}
 
 	delete[] external_ram;
 	external_ram = nullptr;
 	
 	delete[] rtc_registers;
 	rtc_registers = nullptr;
-
-	save_ram();
 
 }
 

@@ -22,8 +22,11 @@ sfml_interface::sfml_interface(bool dbg){
 
 sfml_interface::~sfml_interface(){
 	delete[] px;
-	if(oam_dbg)
+	px = nullptr;
+	if(oam_dbg){
 		delete[] oam_px;
+		oam_px = nullptr;
+	}
 
 }
 

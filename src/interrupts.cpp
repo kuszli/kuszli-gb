@@ -6,6 +6,11 @@ interrupts::interrupts(_memory* mem){
 
 }
 
+interrupts::~interrupts(){
+	IF = nullptr;
+	IE = nullptr;
+}
+
 uint8_t interrupts::check(){
 	uint8_t interrupt = 0xFF;
 	for(uint8_t i = 0; i<5; ++i){

@@ -8,9 +8,9 @@ dma::dma(_memory* mem){
 }
 
 dma::~dma(){
-	delete memory;
-	delete dma_register;
-	delete oam;
+	memory = nullptr;
+	dma_register = nullptr;
+	oam = nullptr;
 }
 
 void dma::transfer(){

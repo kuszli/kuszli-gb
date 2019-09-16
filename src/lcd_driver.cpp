@@ -32,7 +32,7 @@ lcd_driver::lcd_driver(_memory* mem){
 
 	oam_debug_buffer = new uint8_t*[128];
 
-	for(int i = 0; i < 144; ++i){
+	for(int i = 0; i < 128; ++i){
 		oam_debug_buffer[i] = new uint8_t[40];
 	}
 }
@@ -41,9 +41,19 @@ lcd_driver::lcd_driver(_memory* mem){
 lcd_driver::~lcd_driver(){
 
 	delete[] screen_buffer;
+	screen_buffer = nullptr;
+
 	delete[] oam_debug_buffer;
+	oam_debug_buffer = nullptr;
+
 	delete sprites_cont;
+	sprites_cont = nullptr;
+
 	delete visible_sprites;
+	visible_sprites = nullptr;
+
+	delete pixel_fifo;
+	pixel_fifo = nullptr;
 }
 
 void lcd_driver::update_sprite(const uint8_t oam_idx){

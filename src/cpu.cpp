@@ -34,7 +34,9 @@ EI_scheduled = false;
 
 cpu::~cpu(){
 	delete[] opcode_array;
+	opcode_array = nullptr;
 	delete[] CB_array;
+	CB_array = nullptr;
 }
 
 bool cpu::handle_interrupts(uint8_t id){

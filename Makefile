@@ -1,4 +1,4 @@
-CXXFLAGS = -c -std=c++11 
+CXXFLAGS = -fPIC -c -std=c++11 
 LIBS = -lsfml-graphics -lsfml-window -lsfml-system
 OBJ = obj
 SRC = src
@@ -6,9 +6,16 @@ INC = -I inc
 
 OBJS = $(OBJ)/main.o $(OBJ)/gameboy.o $(OBJ)/cpu.o $(OBJ)/interrupts.o $(OBJ)/lcd_driver.o $(OBJ)/timer.o $(OBJ)/memory.o $(OBJ)/joypad.o $(OBJ)/dma.o $(OBJ)/sfml_buttons.o $(OBJ)/sfml_interface.o $(OBJ)/cmd_options.o
 
+LIB_OBJS = $(OBJ)/gameboy.o $(OBJ)/cpu.o $(OBJ)/interrupts.o $(OBJ)/lcd_driver.o $(OBJ)/timer.o $(OBJ)/memory.o $(OBJ)/joypad.o $(OBJ)/dma.o $(OBJ)/sfml_buttons.o
 
 kuszli-gb: $(OBJS)
 	g++ $(OBJS) $(LIBS) -o kuszli-gb
+
+library: $(LIB_OBJS)
+	mkdir -p  /usr/local/lib/kuszli-gb
+	g++ -shared $(LIB_OBJS) -o /usr/local/lib/kuszli-gb/libkuszli-gb.so
+	mkdir -p /usr/local/include/kuszli-gb
+	cp inc/*.hh /usr/local/include/kuszli-gb && cp inc/*.h /usr/local/include/kuszli-gb
 
 $(OBJ)/main.o: $(SRC)/main.cpp
 	g++ $(CXXFLAGS) $(INC) $(SRC)/main.cpp -o $(OBJ)/main.o
@@ -47,6 +54,6 @@ $(OBJ)/cmd_options.o: $(SRC)/cmd_options.cpp
 	g++ $(CXXFLAGS) $(INC) $(SRC)/cmd_options.cpp -o $(OBJ)/cmd_options.o
 
 clean:
-	rm $(OBJ)/*.o
+	rm -f $(OBJ)/*.o
 
 

@@ -16,15 +16,20 @@ gameboy::gameboy(): button(0), cycles(0)
 
 gameboy::~gameboy(){
 
-	delete[] memory;
+	delete memory;
 	memory = nullptr;
-
 	delete _cpu;
+	_cpu = nullptr;
 	delete _timer;
+	_timer = nullptr;
 	delete _dma;
+	_dma = nullptr;
 	delete _lcd_driver;
+	_lcd_driver = nullptr;
 	delete _joypad;
+	_joypad = nullptr;
 	delete _interrupts;
+	_interrupts = nullptr;
 }
 
 void gameboy::run(){
