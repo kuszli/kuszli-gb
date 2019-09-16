@@ -11,7 +11,7 @@ LIB_OBJS = $(OBJ)/gameboy.o $(OBJ)/cpu.o $(OBJ)/interrupts.o $(OBJ)/lcd_driver.o
 kuszli-gb: $(OBJS)
 	g++ $(OBJS) $(LIBS) -o kuszli-gb
 
-library: $(LIB_OBJS)
+install: $(LIB_OBJS)
 	mkdir -p  /usr/local/lib/kuszli-gb
 	g++ -shared $(LIB_OBJS) -o /usr/local/lib/kuszli-gb/libkuszli-gb.so
 	mkdir -p /usr/local/include/kuszli-gb
