@@ -1,4 +1,5 @@
 #include "memory.hh"
+#include <cstring>
 
 _memory::_memory(){
 
@@ -48,10 +49,13 @@ void _memory::connect_rom(const std::string& rom_name){
 
 
 	mode_select = 0;
+
 	rtc_registers = new uint8_t[5];
+
 	_rom_name = rom_name;
 
 	rom = new std::fstream(rom_name.c_str(), std::ios::in | std::ios::binary);
+	
 
 	if(!rom->is_open())
 		throw std::runtime_error("Error opening game file.");
@@ -65,6 +69,7 @@ void _memory::connect_rom(const std::string& rom_name){
 
 	if(memory[0x148] <= 0x6)
 		rom_banks = new uint8_t[length];
+	
 	else
 		throw std::runtime_error("Unsupported rom size.");
 
@@ -78,6 +83,8 @@ void _memory::connect_rom(const std::string& rom_name){
 		mbc_type = mbc3;
 	else if(memory[0x147] >= 0x19 && memory[0x147] < 0x1F)
 		mbc_type = mbc5;
+	else
+		mbc_type = none;
 
 
 	rom_size = length;
@@ -103,6 +110,19 @@ void _memory::connect_rom(const std::string& rom_name){
 
 	load_ram();
 
+
+}
+
+
+void _memory::disconnect_rom(){
+	
+	std::memset((void*)memory, 0, 0x8000);
+	delete rtc_registers;
+	rom->close();
+	delete rom_banks;
+	delete external_ram;
+	mbc_type = none;
+	ex_ram = false;
 
 }
 

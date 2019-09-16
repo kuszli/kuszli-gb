@@ -63,6 +63,7 @@ public:
 	uint8_t& operator[](const uint16_t index);
 	const uint8_t& operator[](const uint16_t index) const;
 	void connect_rom(const std::string&);
+	void disconnect_rom();
 	uint8_t read(const uint16_t index){ return memory[index];}
 	void write(const uint16_t index, const uint8_t value);
 	void save_ram();
