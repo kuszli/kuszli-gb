@@ -51,7 +51,7 @@ class lcd_driver{
 	uint8_t* chr_code2;
 	uint8_t* oam;
 	uint8_t* line_buffer;
-	uint8_t** screen_buffer;
+	uint8_t* screen_buffer;
 	uint8_t** oam_debug_buffer;
 	std::vector<uint8_t>* sprites_cont;
 	std::priority_queue<uint8_t, std::vector<uint8_t>, compare>* visible_sprites;
@@ -64,6 +64,7 @@ class lcd_driver{
 	uint8_t interrupt_selection_flags[4] = {(1 << 5), 0, (1 << 3), (1 << 4)};
 	uint8_t blank_tile[16] = {0};
 
+	bool dbg;
 	bool oam_search_done;
 	uint8_t mode;
 	uint8_t cycles_to_add;
@@ -98,7 +99,8 @@ public:
 	~lcd_driver();
 	void update(const uint8_t cycles);
 	uint8_t debug(){ return lcd_registers[LY]; }
-	uint8_t** const screen(){ return screen_buffer; }
+	void set_oam_viewer(bool opt){ dbg = opt; }
+	uint8_t* const screen(){ return screen_buffer; }
 	uint8_t** const oam_screen(){ return oam_debug_buffer; }
 
 };

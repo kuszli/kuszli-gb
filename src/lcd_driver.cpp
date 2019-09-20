@@ -23,12 +23,12 @@ lcd_driver::lcd_driver(_memory* mem){
 	LY_counter = 0;
 	old_stat_signal = 0;
 	oam_search_done = false;
-
-	screen_buffer = new uint8_t*[144];
-
-	for(int i = 0; i < 144; ++i){
-		screen_buffer[i] = new uint8_t[160];
-	}
+	dbg = false;
+	//screen_buffer = new uint8_t*[144];
+	screen_buffer = new uint8_t[160*144*4];
+//	for(int i = 0; i < 144; ++i){
+//		screen_buffer[i] = new uint8_t[160*4];
+//	}
 
 	oam_debug_buffer = new uint8_t*[128];
 
@@ -86,7 +86,8 @@ void lcd_driver::update_sprite(const uint8_t oam_idx){
 
 void inline lcd_driver::draw_pixel(const uint8_t color){
 
-	screen_buffer[lcd_registers[LY]][curr_px++] = color;
+	//screen_buffer[lcd_registers[LY]][4*curr_px++] = color;
+	screen_buffer[(lcd_registers[LY]*160 + curr_px++)*4] = color;
 }
 
 uint8_t inline lcd_driver::get_pixel(const uint8_t* pal, const uint8_t color){
@@ -211,7 +212,8 @@ uint8_t lcd_driver::find_common_line(const uint8_t oam_index){
 
 void lcd_driver::draw_blank_line(){
 	for(int i = 0; i < 160; ++i){
-		screen_buffer[lcd_registers[LY]][i] = 0;
+		//screen_buffer[lcd_registers[LY]][i*4] = 0;
+		screen_buffer[(lcd_registers[LY]*160 + i)*4] = 0;
 	}
 }
 
@@ -382,7 +384,8 @@ void lcd_driver::switch_mode(){
 			oam_search_done = false;
 			mode = 1; //draw pixels
 			draw_line();
-			debug_draw_oam();
+			if(dbg)
+				debug_draw_oam();
 			break;
 		}
 
