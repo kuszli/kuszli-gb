@@ -3,7 +3,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <cstdint>
-#include "sfml_buttons.hh"
+#include <vector>
 
 
 class sfml_interface{
@@ -19,12 +19,15 @@ class sfml_interface{
 	sf::Sprite sprite;
 	sf::Sprite oam;
 	sf::Event event;
-
+	
+	std::vector<sf::Keyboard::Key> user_buttons;
 
 	uint8_t* px; 
 	uint8_t* oam_px;
 	uint8_t key;
 	bool oam_dbg;
+
+	void check_key(uint8_t &key);
 
 public:
 
