@@ -33,14 +33,16 @@ gameboy::~gameboy(){
 }
 
 void gameboy::run(){
-
-	for(int i = 0; i < cycles_per_frame; i += cycles){
+	
+	for(;;){//i = 0; ;i += cycles){
 		cycles = _cpu->execute(_cpu->decode());
 		_timer->update(cycles);
 		_dma->update(cycles);
 		_lcd_driver->update(cycles);
 		_joypad->update(button);
 		_cpu->handle_interrupts(_interrupts->check());
+		if(memory->operator[](0xFF44) == 153)
+			break;
 	}
 
 
