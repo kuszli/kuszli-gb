@@ -1,4 +1,21 @@
 #include "sfml_interface.hh"
+#include <iostream>
+
+const char* fragment = R"glsl(
+        #version 130
+
+        uniform sampler2D pixels;
+
+        uniform sampler2D palette;
+
+        void main(){
+
+            vec4 col = texture(pixels, gl_TexCoord[0].xy);
+            gl_FragColor = texture(palette, vec2(85*col.x, 0));
+
+        }
+)glsl";
+
 
 sfml_interface::sfml_interface(bool dbg){
 	window.create(sf::VideoMode(160, 144), "kuszli-gb");
@@ -27,7 +44,16 @@ sfml_interface::sfml_interface(bool dbg){
 	key = 0;
 	oam_dbg = dbg;
 	window.setVerticalSyncEnabled(true);
-	//window.setFramerateLimit(30);
+
+	palette.create(4,1);
+   palette.update(pal);
+
+	if(!shader.loadFromMemory(fragment, sf::Shader::Fragment)){
+        std::cerr << "Shader loading error\n";
+    }
+
+    shader.setUniform("pixels", sf::Shader::CurrentTexture);
+    shader.setUniform("palette", palette);
 }
 
 
@@ -42,20 +68,10 @@ sfml_interface::~sfml_interface(){
 }
 
 
-void sfml_interface::display(uint8_t** pixels){
+void sfml_interface::display(uint8_t* pixels){
 
-
-	for(int y = 0; y < 144; ++y){
-		for(int x = 0; x < 160; ++x){
-			px[(y*160 + x)*4] = pal[pixels[y][x*4]].r;
-			px[(y*160 + x)*4 + 1] = pal[pixels[y][x*4]].g;
-			px[(y*160 + x)*4 + 2] = pal[pixels[y][x*4]].b;
-			px[(y*160 + x)*4 + 3] = 255;
-		}	
-	}
-
-	texture.update(px);
-	window.draw(sprite);
+	texture.update(pixels);
+	window.draw(sprite, &shader);
 	window.display();
 
 }
@@ -65,7 +81,7 @@ void sfml_interface::show_oam(uint8_t** oam_pixels){
 
 	if(!oam_dbg)
 		return;
-
+/*
 	for(int y = 0; y < 128; ++y){
 		for(int x = 0; x < 40; ++x){
 			oam_px[(y*40 + x)*4] = pal[oam_pixels[y][x]].r;
@@ -74,7 +90,7 @@ void sfml_interface::show_oam(uint8_t** oam_pixels){
 			oam_px[(y*40 + x)*4+3] = 255;
 		}
 	}
-
+*/
 	oam_texture.update(oam_px);
 	debug.draw(oam);
 	debug.display();

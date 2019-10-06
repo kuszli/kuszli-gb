@@ -949,11 +949,6 @@ uint8_t cpu::PUSH(const uint16_t reg){
 	return 16;
 }
 
-uint8_t cpu::PUSH2(uint8_t a, uint8_t b){
-	memory->write(--SP, a);
-	memory->write(--SP, b);
-	return 16;
-}
 
 uint8_t cpu::ADD_A_d8(){
 	uint8_t tmp = (*memory)[PC++];

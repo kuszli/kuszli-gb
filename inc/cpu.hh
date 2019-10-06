@@ -55,7 +55,6 @@ carry flag (4 most significant bits)
 
 
 //generic instructions*******************************************************
-	uint8_t PUSH2(uint8_t a, uint8_t b);
 
 	uint8_t NOP();
 

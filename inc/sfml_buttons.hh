@@ -2,6 +2,7 @@
 #define sfmlbtns
 
 #include <cstdint>
+#include <vector>
 #include <SFML/Window.hpp>
 
 #define RIGHT (1 << 0)

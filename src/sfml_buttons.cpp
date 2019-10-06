@@ -1,5 +1,10 @@
 #include "sfml_buttons.hh"
 
+
+
+
+
+
 void sfml_buttons::read(uint8_t & button){
 
 	if(sf::Keyboard::isKeyPressed(sf::Keyboard::Right))

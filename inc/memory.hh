@@ -60,6 +60,11 @@ public:
 
 	bool dma_request;
 	bool dma_time;
+	bool chan1_trigg;
+	bool chan2_trigg;
+	bool chan3_trigg;
+	bool chan4_trigg;
+
 	uint8_t& operator[](const uint16_t index);
 	const uint8_t& operator[](const uint16_t index) const;
 	void connect_rom(const std::string&);

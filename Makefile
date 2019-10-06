@@ -1,10 +1,10 @@
 CXXFLAGS = -fPIC -c -std=c++11 
-LIBS = -lsfml-graphics -lsfml-window -lsfml-system
+LIBS = -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 OBJ = obj
 SRC = src
 INC = -I inc
 
-OBJS = $(OBJ)/main.o $(OBJ)/gameboy.o $(OBJ)/cpu.o $(OBJ)/interrupts.o $(OBJ)/lcd_driver.o $(OBJ)/timer.o $(OBJ)/memory.o $(OBJ)/joypad.o $(OBJ)/dma.o $(OBJ)/sfml_interface.o $(OBJ)/cmd_options.o
+OBJS = $(OBJ)/main.o $(OBJ)/gameboy.o $(OBJ)/cpu.o $(OBJ)/interrupts.o $(OBJ)/lcd_driver.o $(OBJ)/timer.o $(OBJ)/memory.o $(OBJ)/joypad.o $(OBJ)/dma.o $(OBJ)/sfml_interface.o $(OBJ)/cmd_options.o $(OBJ)/audio_controller.o $(OBJ)/wav_header.o
 
 LIB_OBJS = $(OBJ)/gameboy.o $(OBJ)/cpu.o $(OBJ)/interrupts.o $(OBJ)/lcd_driver.o $(OBJ)/timer.o $(OBJ)/memory.o $(OBJ)/joypad.o $(OBJ)/dma.o 
 
@@ -49,6 +49,12 @@ $(OBJ)/sfml_interface.o: $(SRC)/sfml_interface.cpp
 
 $(OBJ)/cmd_options.o: $(SRC)/cmd_options.cpp
 	g++ $(CXXFLAGS) $(INC) $(SRC)/cmd_options.cpp -o $(OBJ)/cmd_options.o
+
+$(OBJ)/audio_controller.o: $(SRC)/audio_controller.cpp
+	g++ $(CXXFLAGS) $(INC) $(SRC)/audio_controller.cpp -o $(OBJ)/audio_controller.o
+
+$(OBJ)/wav_header.o: $(SRC)/wav_header.cpp
+	g++ $(CXXFLAGS) $(INC) $(SRC)/wav_header.cpp -o $(OBJ)/wav_header.o
 
 clean:
 	rm -f $(OBJ)/*.o
