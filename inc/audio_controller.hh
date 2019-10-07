@@ -12,14 +12,18 @@
 struct channel{
 
 	uint8_t channel_no;
-	uint8_t amplitude;
+	int8_t amplitude;
 	uint8_t volume;
 	const uint8_t* duty;
 	uint8_t duty_cycle;
 	uint32_t freq;
+	uint32_t shadow_freq;
 	uint32_t real_freq;
 	uint32_t freq_counter;
+	uint32_t sweep_counter;
+	uint8_t sweep_step;
 	uint32_t length;
+	uint32_t length_counter;
 	uint32_t sample_count;
 	uint8_t envelope_steps;
 	uint32_t envelope_counter;
@@ -53,10 +57,10 @@ class audio_controller{
 
 	channel channel1, channel2, channel3, channel4;
 
-	uint8_t** audio_buffer_data;
-	uint8_t* curr_audio_buffer;
-	uint8_t* sample_buffer;
-	uint8_t* ready_buff;
+	int16_t** audio_buffer_data;
+	int16_t* curr_audio_buffer;
+	int16_t* sample_buffer;
+	int16_t* ready_buff;
 
 	uint8_t* audio_registers;
 
@@ -73,16 +77,19 @@ class audio_controller{
 	void update_channel3();
 	void update_channel4();
 
+	void (*callback_function)(int16_t*);
+
 public:
 	audio_controller(_memory* mem);
 	~audio_controller();
 
 	void update(const uint8_t cycles);
-	uint8_t* get_audio_buffer(){ return audio_buffer_data[0]; }
-	uint8_t* second_audio_buffer() { return audio_buffer_data[1]; }
-	uint8_t* ready_buffer() { return ready_buff; }
+	int16_t* get_audio_buffer(){ return audio_buffer_data[0]; }
+	int16_t* second_audio_buffer() { return audio_buffer_data[1]; }
+	int16_t* ready_buffer() { return ready_buff; }
 	bool is_buffer_ready() { return buffer_ready; }
 	void reset_buffer_state() { buffer_ready = false; }
+	void set_callback_function(void (*cf)(int16_t*)){ callback_function = cf; }
 
 };
 

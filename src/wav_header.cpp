@@ -65,7 +65,7 @@ void wav_header::set_bits_per_sample(const uint8_t bits_per_sample){
 }
 
 
-void wav_header::append_to_buffer(uint8_t* const buffer, const uint32_t size){
+void wav_header::append_to_buffer(int16_t* const buffer, const uint32_t size){
 
 	if(size <= sizeof(wav_header))
 		return;

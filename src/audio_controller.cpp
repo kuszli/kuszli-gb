@@ -12,19 +12,21 @@ audio_controller::audio_controller(_memory* mem){
 	channel3.trigg = &mem->chan3_trigg;
 	channel4.trigg = &mem->chan4_trigg;
 
-	audio_buffer_data = new uint8_t*[2];
-	audio_buffer_data[0] = new uint8_t[8192];
-	audio_buffer_data[1] = new uint8_t[8192];
-	std::memset(audio_buffer_data[0], 0, 8192);
-	std::memset(audio_buffer_data[1], 0, 8192);
+	audio_buffer_data = new int16_t*[2];
+	audio_buffer_data[0] = new int16_t[8192];
+	audio_buffer_data[1] = new int16_t[8192];
+	//std::memset(audio_buffer_data[0], 0, 1024 * sizeof(int16_t));
+	//std::memset(audio_buffer_data[1], 0, 1024 * sizeof(int16_t));
 
 	curr_audio_buffer = audio_buffer_data[0];
-	sample_buffer = &curr_audio_buffer[44];
+	sample_buffer = &curr_audio_buffer[0];
 	ready_buff = audio_buffer_data[0];
 
 	sampling_freq = 32768;
 	curr_buff_pos = 0;
 	buffer_ready = false;
+
+	audio_registers[CHANNEL_CONT] &= 0xCC;
 
 }
 
@@ -70,16 +72,18 @@ void audio_controller::update(const uint8_t cycles){
 			bool ch3_right_enable = (audio_registers[SOUND_LEVEL] & 1 << 6) ? true : false;
 			bool ch4_left_enable = (audio_registers[SOUND_LEVEL] & 1 << 3) ? true : false;
 			bool ch4_right_enable = (audio_registers[SOUND_LEVEL] & 1 << 7) ? true : false;
-			uint8_t left_vol = std::min( ((audio_registers[CHANNEL_CONT] & 0x7) + 1), 4);
-			uint8_t right_vol = std::min( (((audio_registers[CHANNEL_CONT] & 0x70) >> 4) + 1), 4);
+			uint8_t left_vol = (audio_registers[CHANNEL_CONT] & 0x7) + 1;
+			uint8_t right_vol = ((audio_registers[CHANNEL_CONT] & 0x70) >> 4) + 1;
 
-			sample_buffer[curr_buff_pos++] = (channel1.amplitude * ch1_left_enable + channel2.amplitude * ch2_left_enable + channel3.amplitude * ch3_left_enable + channel4.amplitude * ch4_left_enable) * left_vol;
 
-			sample_buffer[curr_buff_pos++] = (channel1.amplitude * ch1_right_enable + channel2.amplitude * ch2_right_enable + channel3.amplitude * ch3_right_enable + channel4.amplitude * ch4_right_enable) * right_vol;
+			
+			sample_buffer[curr_buff_pos++] = 64*(channel1.amplitude * ch1_left_enable + channel2.amplitude * ch2_left_enable + channel3.amplitude * ch3_left_enable + channel4.amplitude * ch4_left_enable) * left_vol;
+
+			sample_buffer[curr_buff_pos++] = 64*(channel1.amplitude * ch1_right_enable + channel2.amplitude * ch2_right_enable + channel3.amplitude * ch3_right_enable + channel4.amplitude * ch4_right_enable) * right_vol;
 		
 		}
 
-		if(curr_buff_pos == 4096 + 44){
+		if(curr_buff_pos == 8192){
 			curr_buff_pos = 0;
 			buffer_ready = true;
 			ready_buff = curr_audio_buffer;
@@ -89,7 +93,9 @@ void audio_controller::update(const uint8_t cycles){
 			else
 				curr_audio_buffer = audio_buffer_data[0];
 
-			sample_buffer = &curr_audio_buffer[44];
+			sample_buffer = &curr_audio_buffer[0];
+
+			callback_function(ready_buff);
 
 		}
 
@@ -113,22 +119,64 @@ void audio_controller::update_channel1(){
 			channel1.length = 16384 * (64 - (audio_registers[S1_LENGTH] & 0x3F));
 
 		channel1.freq = ((audio_registers[S1_CONT] & 0x7) << 8) | audio_registers[S1_FREQ];
+		channel1.shadow_freq = channel1.freq;
 		channel1.sample_count = 4*(2048 - channel1.freq);
 		channel1.freq_counter = 0;
 
+
+
 		channel1.envelope_counter = (audio_registers[S1_ENVELOPE] & 0x7) * 65536;
+
 		channel1.volume = ((audio_registers[S1_ENVELOPE] & 0xF0) >> 4);
+
+		channel1.sweep_step = 1 << (audio_registers[S1_SWEEP] & 0x7);
+		channel1.sweep_counter = 32768 * (audio_registers[S1_SWEEP] & 0x70) >> 4;
 
 		channel1.duty = duties[ ((audio_registers[S1_LENGTH] & 0xC0) >> 6) ];
 		channel1.duty_cycle = 0;
 		channel1.enable = true;
 		channel1.reset_trigg();
 		
+		
 	}
 
 	if(!channel1.enable){
 		channel1.amplitude = 0;
 		return;
+	}
+
+	if(!(audio_registers[S1_ENVELOPE] & 0xF8)){
+		channel1.amplitude = 0;
+		return;
+	}
+
+	if( ((audio_registers[S1_SWEEP] & 0x70) >> 4) != 0){
+
+		--channel1.sweep_counter;
+		
+		if(channel1.sweep_counter == 0){
+			
+			if(audio_registers[S1_SWEEP] & 1 << 3){
+				channel1.shadow_freq = channel1.shadow_freq - channel1.shadow_freq/channel1.sweep_step;
+				channel1.sample_count = 4*(2048 - channel1.shadow_freq);
+				
+			}
+			else{
+				channel1.shadow_freq = channel1.shadow_freq + channel1.shadow_freq/channel1.sweep_step;
+				if(channel1.shadow_freq > 2047){
+					channel1.enable = false;
+					audio_registers[AUDIO_CONT] &= ~(1 << 0);
+					channel1.amplitude = 0;
+					return;
+				}
+				else{
+					channel1.sample_count = 4*(2048 - channel1.shadow_freq);
+				}
+			}
+
+			channel1.sweep_counter = 32768 * (audio_registers[S1_SWEEP] & 0x70) >> 4;
+		}
+
 	}
 	
 	if((audio_registers[S1_ENVELOPE] & 0x7) != 0){
@@ -160,7 +208,6 @@ void audio_controller::update_channel1(){
 			channel1.duty_cycle = 0;
 	}
 
-	
 
 	if(!(audio_registers[S1_CONT] & 1 << 6))
 		channel1.amplitude = channel1.volume * channel1.duty[channel1.duty_cycle];
@@ -204,11 +251,14 @@ void audio_controller::update_channel2(){
 		else
 			channel2.length = 16384 *( 64 - (audio_registers[S2_LENGTH] & 0x3F));
 
+		
 		channel2.freq = ((audio_registers[S2_CONT] & 0x7) << 8) | audio_registers[S2_FREQ];
 		channel2.sample_count = 4*(2048 - channel2.freq);
-		channel2.freq_counter = 0;
+		channel2.freq_counter = channel2.freq_counter & 0x3;
+
 
 		channel2.envelope_counter = (audio_registers[S2_ENVELOPE] & 0x7) * 65536;
+
 		channel2.volume = ((audio_registers[S2_ENVELOPE] & 0xF0) >> 4);
 
 		channel2.duty = duties[ ((audio_registers[S2_LENGTH] & 0xC0) >> 6) ];
@@ -219,6 +269,11 @@ void audio_controller::update_channel2(){
 	}
 
 	if(!channel2.enable){
+		channel2.amplitude = 0;
+		return;
+	}
+
+	if(!(audio_registers[S2_ENVELOPE] & 0xF8)){
 		channel2.amplitude = 0;
 		return;
 	}
@@ -254,14 +309,13 @@ void audio_controller::update_channel2(){
 	}
 
 
+
 	if(!(audio_registers[S2_CONT] & 1 << 6))
 		channel2.amplitude = channel2.volume * channel2.duty[channel2.duty_cycle];
 
 	
 	else{
 		
-
-
 		if(channel2.length != 0)
 			channel2.amplitude = channel2.volume * channel2.duty[channel2.duty_cycle];
 		else{
@@ -414,6 +468,11 @@ void audio_controller::update_channel4(){
 
 
 	if(!channel4.enable){
+		channel4.amplitude = 0;
+		return;
+	}
+
+	if(!(audio_registers[S4_ENVELOPE] & 0xF8)){
 		channel4.amplitude = 0;
 		return;
 	}

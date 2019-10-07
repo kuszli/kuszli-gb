@@ -294,6 +294,8 @@ void _memory::write_to_hram(const uint16_t index, const uint8_t value){
 		memory[index] = value;
 	}
 
+
+
 	else if(index == 0xFF19){
 		if(value & 1 << 7)
 			chan2_trigg = true;

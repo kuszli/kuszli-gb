@@ -31,7 +31,7 @@ public:
 	uint8_t sample_rate();
 	uint8_t bits_per_sample();
 
-	void append_to_buffer(uint8_t* const buffer, const uint32_t size);
+	void append_to_buffer(int16_t* const buffer, const uint32_t size);
 		
 
 

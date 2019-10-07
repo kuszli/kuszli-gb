@@ -37,8 +37,8 @@ gameboy::~gameboy(){
 }
 
 void gameboy::run(){
-	
-	for(;;){//i = 0; ;i += cycles){
+
+	for(;;){
 		cycles = _cpu->execute(_cpu->decode());
 		_timer->update(cycles);
 		_dma->update(cycles);
@@ -46,8 +46,10 @@ void gameboy::run(){
 		_joypad->update(button);
 		_cpu->handle_interrupts(_interrupts->check());
 		_audio_controller->update(cycles);
-		if(memory->operator[](0xFF44) == 153)
+
+		if(memory->operator[](0xFF44) == 153){
 			break;
+		}
 	}
 
 

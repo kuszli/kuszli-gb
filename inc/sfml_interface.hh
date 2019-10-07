@@ -2,9 +2,19 @@
 #define sfml_interfaceh
 
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
+#include "wav_header.hh"
 #include <cstdint>
 #include <vector>
 
+	extern sf::SoundBuffer buffer;
+	extern sf::Sound sound;
+
+namespace m_audio{
+
+	void play_audio(int16_t* samples);
+
+}
 
 class sfml_interface{
 
