@@ -40,12 +40,9 @@ public:
 	void set_debug(bool opt){_lcd_driver->set_oam_viewer(opt);}
 	uint8_t* get_display_data() const {return _lcd_driver->screen();}
 	uint8_t** oam_debug() const {return _lcd_driver->oam_screen();}
-	int16_t* audio_buffer() const {return _audio_controller->get_audio_buffer();}
-	bool audio_buffer_ready() {return _audio_controller->is_buffer_ready();}
-	int16_t* second_audio_buffer() { return _audio_controller->second_audio_buffer(); }
-	int16_t* ready_audio_buffer() { return _audio_controller->ready_buffer(); }
-	void reset_audio_buffer_state() { _audio_controller->reset_buffer_state();}
-	void set_audio_callback_fun(void (*fp)(int16_t*)) { _audio_controller->set_callback_function(fp); }
+	const int16_t* get_audio_buffer() { return _audio_controller->get_buffer(); }
+	const int16_t* get_busy_audio_buffer() { return _audio_controller->busy_buffer(); }	
+	const uint32_t get_audio_buffer_size() { return _audio_controller->get_buffer_size(); }
 	
 
 };

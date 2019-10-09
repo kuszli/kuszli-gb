@@ -131,16 +131,7 @@ void sfml_interface::check_key(uint8_t &key){
 }
 
 
-sf::SoundBuffer buffer;
-sf::Sound sound;
 
-void m_audio::play_audio(int16_t* samples){
-
-		buffer.loadFromSamples(samples, 8192, 2, 32768);
-		sound.setBuffer(buffer);
-		sound.play();
-	
-	}
 
 
 

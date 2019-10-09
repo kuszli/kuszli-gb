@@ -4,7 +4,7 @@ OBJ = obj
 SRC = src
 INC = -I inc
 
-OBJS = $(OBJ)/main.o $(OBJ)/gameboy.o $(OBJ)/cpu.o $(OBJ)/interrupts.o $(OBJ)/lcd_driver.o $(OBJ)/timer.o $(OBJ)/memory.o $(OBJ)/joypad.o $(OBJ)/dma.o $(OBJ)/sfml_interface.o $(OBJ)/cmd_options.o $(OBJ)/audio_controller.o $(OBJ)/wav_header.o
+OBJS = $(OBJ)/main.o $(OBJ)/gameboy.o $(OBJ)/cpu.o $(OBJ)/interrupts.o $(OBJ)/lcd_driver.o $(OBJ)/timer.o $(OBJ)/memory.o $(OBJ)/joypad.o $(OBJ)/dma.o $(OBJ)/sfml_interface.o $(OBJ)/cmd_options.o $(OBJ)/audio_controller.o $(OBJ)/wav_header.o $(OBJ)/sfml_audio.o
 
 LIB_OBJS = $(OBJ)/gameboy.o $(OBJ)/cpu.o $(OBJ)/interrupts.o $(OBJ)/lcd_driver.o $(OBJ)/timer.o $(OBJ)/memory.o $(OBJ)/joypad.o $(OBJ)/dma.o 
 
@@ -55,6 +55,9 @@ $(OBJ)/audio_controller.o: $(SRC)/audio_controller.cpp
 
 $(OBJ)/wav_header.o: $(SRC)/wav_header.cpp
 	g++ $(CXXFLAGS) $(INC) $(SRC)/wav_header.cpp -o $(OBJ)/wav_header.o
+
+$(OBJ)/sfml_audio.o: $(SRC)/sfml_audio.cpp
+	g++ $(CXXFLAGS) $(INC) $(SRC)/sfml_audio.cpp -o $(OBJ)/sfml_audio.o
 
 clean:
 	rm -f $(OBJ)/*.o

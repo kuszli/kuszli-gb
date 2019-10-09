@@ -15,21 +15,22 @@ audio_controller::audio_controller(_memory* mem){
 	audio_buffer_data = new int16_t*[2];
 	audio_buffer_data[0] = new int16_t[8192];
 	audio_buffer_data[1] = new int16_t[8192];
-	//std::memset(audio_buffer_data[0], 0, 1024 * sizeof(int16_t));
-	//std::memset(audio_buffer_data[1], 0, 1024 * sizeof(int16_t));
 
-	curr_audio_buffer = audio_buffer_data[0];
-	sample_buffer = &curr_audio_buffer[0];
-	ready_buff = audio_buffer_data[0];
 
+//	std::memset(audio_buffer_data[0], 0, 8192 * sizeof(int16_t));
+//	std::memset(audio_buffer_data[1], 0, 8192 * sizeof(int16_t));
+
+
+	sample_buffer = audio_buffer_data[0];
+	last_buffer = audio_buffer_data[1];
 	sampling_freq = 32768;
 	curr_buff_pos = 0;
-	buffer_ready = false;
-
-	audio_registers[CHANNEL_CONT] &= 0xCC;
+	ready_buff_pos = 0;
+	audio_registers[CHANNEL_CONT] &= 0xCC; //initial volume
+	counter = 0;
 
 }
-
+ 
 audio_controller::~audio_controller(){
 	delete[] audio_buffer_data;
 	audio_buffer_data = nullptr;
@@ -40,7 +41,7 @@ audio_controller::~audio_controller(){
 
 void audio_controller::update(const uint8_t cycles){
 
-	
+
 	if(audio_registers[AUDIO_CONT] & 1 << 7){
 
 		uint8_t tmp = cycles;
@@ -53,57 +54,70 @@ void audio_controller::update(const uint8_t cycles){
 		}
 	}
 
+	else{
+
+		channel1.amplitude = 0;
+		channel2.amplitude = 0;
+ 		channel3.amplitude = 0;
+		channel4.amplitude = 0;
+	}
+
 	counter += cycles;
 
 	if(counter >= 4194304/sampling_freq){
+
 		counter = 0;
 
-		if(!(audio_registers[AUDIO_CONT] & 1 << 7)){
-			sample_buffer[curr_buff_pos++] = 0;
-			sample_buffer[curr_buff_pos++] = 0;
-		}
-		else{
+		bool ch1_left_enable = (audio_registers[SOUND_LEVEL] & 1 << 0) ? true : false;
+		bool ch1_right_enable = (audio_registers[SOUND_LEVEL] & 1 << 4) ? true : false;
+		bool ch2_left_enable = (audio_registers[SOUND_LEVEL] & 1 << 1) ? true : false;
+		bool ch2_right_enable = (audio_registers[SOUND_LEVEL] & 1 << 5) ? true : false;
+		bool ch3_left_enable = (audio_registers[SOUND_LEVEL] & 1 << 2) ? true : false;
+		bool ch3_right_enable = (audio_registers[SOUND_LEVEL] & 1 << 6) ? true : false;
+		bool ch4_left_enable = (audio_registers[SOUND_LEVEL] & 1 << 3) ? true : false;
+		bool ch4_right_enable = (audio_registers[SOUND_LEVEL] & 1 << 7) ? true : false;
+		uint8_t left_vol = (audio_registers[CHANNEL_CONT] & 0x7) + 1;
+		uint8_t right_vol = ((audio_registers[CHANNEL_CONT] & 0x70) >> 4) + 1;
 
-			bool ch1_left_enable = (audio_registers[SOUND_LEVEL] & 1 << 0) ? true : false;
-			bool ch1_right_enable = (audio_registers[SOUND_LEVEL] & 1 << 4) ? true : false;
-			bool ch2_left_enable = (audio_registers[SOUND_LEVEL] & 1 << 1) ? true : false;
-			bool ch2_right_enable = (audio_registers[SOUND_LEVEL] & 1 << 5) ? true : false;
-			bool ch3_left_enable = (audio_registers[SOUND_LEVEL] & 1 << 2) ? true : false;
-			bool ch3_right_enable = (audio_registers[SOUND_LEVEL] & 1 << 6) ? true : false;
-			bool ch4_left_enable = (audio_registers[SOUND_LEVEL] & 1 << 3) ? true : false;
-			bool ch4_right_enable = (audio_registers[SOUND_LEVEL] & 1 << 7) ? true : false;
-			uint8_t left_vol = (audio_registers[CHANNEL_CONT] & 0x7) + 1;
-			uint8_t right_vol = ((audio_registers[CHANNEL_CONT] & 0x70) >> 4) + 1;
+		sample_buffer[curr_buff_pos++] = 64 *
+		(channel1.amplitude * ch1_left_enable + channel2.amplitude * ch2_left_enable + channel3.amplitude * ch3_left_enable + channel4.amplitude * ch4_left_enable) * left_vol;
 
-
-			
-			sample_buffer[curr_buff_pos++] = 64*(channel1.amplitude * ch1_left_enable + channel2.amplitude * ch2_left_enable + channel3.amplitude * ch3_left_enable + channel4.amplitude * ch4_left_enable) * left_vol;
-
-			sample_buffer[curr_buff_pos++] = 64*(channel1.amplitude * ch1_right_enable + channel2.amplitude * ch2_right_enable + channel3.amplitude * ch3_right_enable + channel4.amplitude * ch4_right_enable) * right_vol;
+		sample_buffer[curr_buff_pos++] = 64 *
+		(channel1.amplitude * ch1_right_enable + channel2.amplitude * ch2_right_enable + channel3.amplitude * ch3_right_enable + channel4.amplitude * ch4_right_enable) * right_vol;
 		
-		}
-
-		if(curr_buff_pos == 8192){
-			curr_buff_pos = 0;
-			buffer_ready = true;
-			ready_buff = curr_audio_buffer;
-
-			if(curr_audio_buffer == audio_buffer_data[0])
-				curr_audio_buffer = audio_buffer_data[1];
-			else
-				curr_audio_buffer = audio_buffer_data[0];
-
-			sample_buffer = &curr_audio_buffer[0];
-
-			callback_function(ready_buff);
-
-		}
-
+		if(curr_buff_pos == 4096)
+			switch_buffer();
+		
 	}
 
+}
+
+void audio_controller::switch_buffer(){
+	
+	ready_buff_pos = curr_buff_pos;
+	curr_buff_pos = 0;
+
+	if(sample_buffer == audio_buffer_data[0])
+		sample_buffer = audio_buffer_data[1];
+
+	else
+		sample_buffer = audio_buffer_data[0];
+	
+	
+}
 
 
+const int16_t* audio_controller::get_buffer(){ 
+			
+	if(last_buffer == audio_buffer_data[0]){
+		last_buffer = audio_buffer_data[1];
+		return const_cast<const int16_t*>(audio_buffer_data[1]);
+	}
 
+	else{
+		last_buffer = audio_buffer_data[0];	
+		return const_cast<const int16_t*>(audio_buffer_data[0]);
+	}
 }
 
 void audio_controller::update_channel1(){
