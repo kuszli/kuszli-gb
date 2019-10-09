@@ -52,6 +52,8 @@ class lcd_driver{
 	uint8_t* oam;
 	uint8_t* line_buffer;
 	uint8_t* screen_buffer;
+	uint8_t* cgb_bg_pal;
+	uint8_t* cgb_ob_pal;
 	uint8_t** oam_debug_buffer;
 	std::vector<uint8_t>* sprites_cont;
 	std::priority_queue<uint8_t, std::vector<uint8_t>, compare>* visible_sprites;
