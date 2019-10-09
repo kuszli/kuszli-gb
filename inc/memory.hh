@@ -15,11 +15,25 @@ enum _mbc_type{
 	mbc5,
 };
 
+
+enum _gb_type{
+	dmg,
+	cgb_compatible,
+	cgb_only,
+	sgb,
+	sgb2,
+};
+
 class _memory{
 
 	uint8_t* memory;
 	uint8_t* rom_banks;
 	uint8_t* external_ram;
+	uint8_t* cgb_wram;
+	uint8_t* cgb_vram;
+	uint8_t wram_bank;
+	uint8_t vram_bank;
+
 	std::fstream* rom;
 
 	std::string _rom_name;
@@ -34,6 +48,7 @@ class _memory{
 	uint16_t available_rom_banks;
 	uint8_t available_ram_banks;
 	_mbc_type mbc_type;
+	_gb_type gb_type;
 	uint32_t rom_size;
 	uint32_t ram_size;
 	uint8_t bank_select1;

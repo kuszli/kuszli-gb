@@ -4,6 +4,7 @@
 _memory::_memory(){
 
 	memory = new uint8_t[65536];
+	wram_bank = vram_bank = 0;
 	rom_connected = false;
 	dummy = 0xFF;
 	dma_time = false;
@@ -12,6 +13,8 @@ _memory::_memory(){
 	external_ram = nullptr;
 	rom_banks = nullptr;
 	rtc_registers = nullptr;
+	cgb_wram = nullptr;
+	cgb_vram = nullptr;
 	ram_enable = false;
 	ex_ram = false;
 	chan1_trigg = false;
@@ -19,7 +22,7 @@ _memory::_memory(){
 	chan3_trigg = false;
 	chan4_trigg = false;
 	mbc_type = none;
-
+	gb_type = dmg;
 }
 
 _memory::~_memory(){
@@ -42,6 +45,12 @@ _memory::~_memory(){
 	
 	delete[] rtc_registers;
 	rtc_registers = nullptr;
+
+	delete[] cgb_wram;
+	cgb_wram = nullptr;
+
+	delete[] cgb_vram;
+	cgb_vram = nullptr;
 
 }
 
@@ -79,6 +88,20 @@ void _memory::connect_rom(const std::string& rom_name){
 
 	rom->read((char*)rom_banks, length);
 	
+	if(memory[0x143] == 0x80)
+		gb_type = cgb_compatible;
+	else if(memory[0x143] == 0xC0)
+		gb_type = cgb_only;
+	else
+		gb_type = dmg;
+
+	if(gb_type != dmg){
+		cgb_wram = new uint8_t[0x8000];
+		cgb_vram = new uint8_t[0x2000];
+	}
+
+	memory[0xFF4F] = 0;
+
 	if(memory[0x147] > 0 && memory[0x147] <=3)
 		mbc_type = mbc1;
 	else if(memory[0x147] == 5 || memory[0x147] == 6)
@@ -89,7 +112,6 @@ void _memory::connect_rom(const std::string& rom_name){
 		mbc_type = mbc5;
 	else
 		mbc_type = none;
-
 
 	rom_size = length;
 	ram_type = memory[0x149];
@@ -142,6 +164,8 @@ void _memory::disconnect_rom(){
 
 	dma_time = false;
 	dma_request = false;
+
+	wram_bank = vram_bank = 0;
 }
 
 uint16_t _memory::curr_rom_bank() const{
@@ -196,6 +220,13 @@ uint8_t& _memory::operator[](const uint16_t index){
 		return rom_banks[0x4000 * curr_rom_bank() + index - 0x4000];
 	}
 
+	else if(index >= 0x8000 && index < 0xA000){
+		if(vram_bank == 1)
+			return cgb_vram[index - 0x8000];
+		else
+			return memory[index];
+	}
+
 	else if((index >= 0xA000 && index < 0xC000)){ //external ram area
 
 		if(ram_enable && ex_ram){
@@ -211,6 +242,15 @@ uint8_t& _memory::operator[](const uint16_t index){
 		}
 		else
 			return dummy;		
+	}
+
+	else if(index >= 0xD000 && index < 0xE000){ //switchable internal ram area
+		
+		if(gb_type != dmg && wram_bank > 2)
+			return cgb_wram[(wram_bank - 2) * 0x1000 + (index - 0xD000)];
+		else
+			return memory[index];
+
 	}
 
 	else
@@ -229,25 +269,31 @@ void _memory::write(const uint16_t index, const uint8_t value){
 
 	if(index < 0x8000)
 		write_to_mbc(index, value);
-/*
+
 	else if(index >= 0x8000 && index < 0xA000){ //vram
-		if((memory[0xFF41] & 0x3) != 0x3)
+		if(vram_bank == 0)
 			memory[index] = value;
+		else
+			cgb_vram[index - 0x8000] = value;
 	}
-*/
+
 	else if((index >= 0xA000 && index < 0xC000))
 		write_to_ex_ram(index, value);
 	
 
-	else if(index >= 0xC000 && index < 0xDE00){ //echo ram
-		memory[index] = value;
-		memory[0xE000 + index - 0xC000] = value;
+	else if(index >= 0xD000 && index < 0xE000){
+		if(gb_type != dmg && wram_bank > 1)
+			cgb_wram[ (wram_bank - 2) * 0x1000 + (index - 0xD000) ] = value;
+		
+		else	
+			memory[index] = value;
+		//memory[0xE000 + index - 0xC000] = value;
 	}
 
-	else if(index >= 0xE000 && index < 0xFE00){ //echo ram
-		memory[index] = value;
-		memory[0xC000 + index - 0xE000] = value;
-	}
+//	else if(index >= 0xE000 && index < 0xFE00){ //echo ram
+//		memory[index] = value;
+//		memory[0xC000 + index - 0xE000] = value;
+//	}
 
 	else if(index >= 0xFE00 && index < 0xFEA0){ //oam ram
 		if((memory[0xFF41] & 0x3) < 0x2)
@@ -333,6 +379,28 @@ void _memory::write_to_hram(const uint16_t index, const uint8_t value){
 		//dma_time = true;
 		dma_request = true;
 		memory[index] = value;
+	}
+
+	else if(index == 0xFF4F){
+
+		if(gb_type != dmg){
+			memory[index] = value;
+			vram_bank = value & 0x1;
+		}
+
+		else
+			memory[index] = 0;
+			
+		
+	}
+
+	else if(index == 0xFF70){
+
+		if(gb_type != dmg){
+			memory[index] = value;
+			wram_bank = value & 0x7;
+		}
+
 	}
 
 	else
