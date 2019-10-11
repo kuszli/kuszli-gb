@@ -28,6 +28,18 @@ struct _sprite{
 	bool priority_over_bg;
 };
 
+enum pixel_type{
+	bg,
+	oam,
+};
+
+struct pixel{
+	uint16_t value;
+	uint8_t priority;
+	pixel_type type;
+	pixel(uint16_t v, uint8_t p, pixel_type t): value(v), priority(p), type(t){}
+};
+
 enum interrupt_type{
 	vblank,
 	mode_x,
@@ -45,10 +57,11 @@ class lcd_driver{
 
 	uint8_t* lcd_registers;
 	uint8_t* IF;
-	uint8_t* vram1;
-	uint8_t* vram2;
-	uint8_t* chr_code1;
-	uint8_t* chr_code2;
+	uint8_t** vram1;
+	uint8_t** vram2;
+	uint8_t** chr_code1;
+	uint8_t** chr_code2;
+	uint8_t* cgb_vram;
 	uint8_t* oam;
 	uint8_t* line_buffer;
 	uint8_t* screen_buffer;
@@ -57,7 +70,7 @@ class lcd_driver{
 	uint8_t** oam_debug_buffer;
 	std::vector<uint8_t>* sprites_cont;
 	std::priority_queue<uint8_t, std::vector<uint8_t>, compare>* visible_sprites;
-	std::deque<uint8_t>* pixel_fifo;
+	std::deque<pixel>* pixel_fifo;
 	_sprite sprite;
 
 	int16_t mode_counter[4] = {0};
@@ -74,6 +87,8 @@ class lcd_driver{
 	uint8_t old_stat_signal;
 	uint8_t curr_px;
 
+	_gb_type gb_type;
+
 	void generate_interrupt(interrupt_type t);
 	void check_for_interrupts();
 	void inc_LY();
@@ -83,12 +98,13 @@ class lcd_driver{
 	void draw_line();
 	void draw_sprite_line(const uint8_t oam_idx, const uint8_t* block_line_data, const uint8_t block, const uint8_t blocks_to_draw);
 	void draw_bg_line(const uint8_t* block_line_data, const uint8_t block, const uint8_t blocks_to_draw);
-	void draw_pixel(const uint8_t color);
-	uint8_t get_pixel(const uint8_t* pal, const uint8_t color);
-	uint8_t get_color(const uint8_t* tile_data, const uint8_t px);
-	uint8_t get_color_rev(const uint8_t* tile_data, const uint8_t px);
+	void draw_pixel(const uint16_t color);
+	uint8_t get_pixel_mono(const uint8_t* pal, const uint8_t color);
+	uint16_t get_pixel_rgb(const uint8_t* pal, const uint8_t color);
+	uint8_t get_palette_index(const uint8_t* tile_data, const uint8_t px);
+	uint8_t get_palette_index_rev(const uint8_t* tile_data, const uint8_t px);
 	void search_oam();
- 	void fill_fifo_bgwin(const uint8_t* bg_map, const uint8_t* bg_data, uint16_t block, const bool windowing);
+ 	void fill_fifo_bgwin(const uint8_t* const* bg_map, const uint8_t* const* bg_data, uint16_t block, const bool windowing);
 	void fill_fifo_oam(const uint8_t oam_idx, const uint8_t shift);
 	void update_sprite(const uint8_t oam_idx);
 	void update_mode();

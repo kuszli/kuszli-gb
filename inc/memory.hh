@@ -33,6 +33,8 @@ class _memory{
 	uint8_t* cgb_vram;
 	uint8_t wram_bank;
 	uint8_t vram_bank;
+	uint8_t* bg_palette_ram;
+	uint8_t* ob_palette_ram;
 
 	std::fstream* rom;
 
@@ -74,7 +76,9 @@ public:
 	~_memory();
 
 	bool dma_request;
+	bool hdma_request;
 	bool dma_time;
+	bool hblank_dma_time;
 	bool chan1_trigg;
 	bool chan2_trigg;
 	bool chan3_trigg;
@@ -82,12 +86,16 @@ public:
 
 	uint8_t& operator[](const uint16_t index);
 	const uint8_t& operator[](const uint16_t index) const;
+	uint8_t* vram_bank2() { return cgb_vram; }
 	void connect_rom(const std::string&);
 	void disconnect_rom();
 	uint8_t read(const uint16_t index){ return memory[index];}
 	void write(const uint16_t index, const uint8_t value);
 	void save_ram();
 	void load_ram();
+	_gb_type get_gb_type() { return gb_type; }
+	uint8_t* bg_palette_mem() { return bg_palette_ram; }
+	uint8_t* ob_palette_mem() { return ob_palette_ram; }
 
 };
 

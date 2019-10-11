@@ -1,7 +1,7 @@
 #include "sfml_interface.hh"
 #include <iostream>
 
-const char* fragment = R"glsl(
+const char* fragment_dmg = R"glsl(
         #version 130
 
         uniform sampler2D pixels;
@@ -12,6 +12,20 @@ const char* fragment = R"glsl(
 
             vec4 col = texture(pixels, gl_TexCoord[0].xy);
             gl_FragColor = texture(palette, vec2(85*col.x, 0));
+
+        }
+)glsl";
+
+
+const char* fragment_cgb = R"glsl(
+        #version 130
+
+        uniform sampler2D pixels;
+
+        void main(){
+
+            vec4 col = texture(pixels, gl_TexCoord[0].xy);
+            gl_FragColor = vec4(col.r * 8, col.g * 8, col.b * 8, 1.0);
 
         }
 )glsl";
@@ -48,12 +62,20 @@ sfml_interface::sfml_interface(bool dbg){
 	palette.create(4,1);
    palette.update(pal);
 
-	if(!shader.loadFromMemory(fragment, sf::Shader::Fragment)){
-        std::cerr << "Shader loading error\n";
-    }
-
-    shader.setUniform("pixels", sf::Shader::CurrentTexture);
-    shader.setUniform("palette", palette);
+	if(0){
+		if(!shader.loadFromMemory(fragment_dmg, sf::Shader::Fragment)){
+       	 std::cerr << "Shader loading error\n";
+   	 }
+		shader.setUniform("palette", palette);
+    	shader.setUniform("pixels", sf::Shader::CurrentTexture);
+	}
+	else{
+		if(!shader.loadFromMemory(fragment_cgb, sf::Shader::Fragment)){
+       	 std::cerr << "Shader loading error\n";
+   	 }
+		shader.setUniform("pixels", sf::Shader::CurrentTexture);
+	}
+   
 }
 
 

@@ -9,12 +9,16 @@ _memory::_memory(){
 	dummy = 0xFF;
 	dma_time = false;
 	dma_request = false;
+	hblank_dma_time = false;
+	hdma_request = false;
 	rom = nullptr;
 	external_ram = nullptr;
 	rom_banks = nullptr;
 	rtc_registers = nullptr;
-	cgb_wram = nullptr;
-	cgb_vram = nullptr;
+	cgb_wram = new uint8_t[0x8000];
+	cgb_vram = new uint8_t[0x2000];
+	bg_palette_ram = new uint8_t[64];
+	ob_palette_ram = new uint8_t[64];
 	ram_enable = false;
 	ex_ram = false;
 	chan1_trigg = false;
@@ -22,7 +26,7 @@ _memory::_memory(){
 	chan3_trigg = false;
 	chan4_trigg = false;
 	mbc_type = none;
-	gb_type = dmg;
+	gb_type = cgb_compatible;
 }
 
 _memory::~_memory(){
@@ -51,6 +55,13 @@ _memory::~_memory(){
 
 	delete[] cgb_vram;
 	cgb_vram = nullptr;
+
+	delete[] bg_palette_ram;
+	bg_palette_ram = nullptr;
+
+	delete[] ob_palette_ram;
+	ob_palette_ram = nullptr;
+	
 
 }
 
@@ -95,12 +106,9 @@ void _memory::connect_rom(const std::string& rom_name){
 	else
 		gb_type = dmg;
 
-	if(gb_type != dmg){
-		cgb_wram = new uint8_t[0x8000];
-		cgb_vram = new uint8_t[0x2000];
-	}
 
 	memory[0xFF4F] = 0;
+	memory[0xFF4D] = 0;
 
 	if(memory[0x147] > 0 && memory[0x147] <=3)
 		mbc_type = mbc1;
@@ -245,13 +253,19 @@ uint8_t& _memory::operator[](const uint16_t index){
 	}
 
 	else if(index >= 0xD000 && index < 0xE000){ //switchable internal ram area
-		
-		if(gb_type != dmg && wram_bank > 2)
+	
+		if(gb_type != dmg && wram_bank >= 2)
 			return cgb_wram[(wram_bank - 2) * 0x1000 + (index - 0xD000)];
 		else
 			return memory[index];
 
 	}
+
+	else if(index == 0xFF69)
+		return bg_palette_ram[memory[0xFF68] & 0x3F];
+
+	else if(index == 0xFF6B)
+		return ob_palette_ram[memory[0xFF6A] & 0x3F];
 
 	else
 		return memory[index]; 
@@ -273,8 +287,10 @@ void _memory::write(const uint16_t index, const uint8_t value){
 	else if(index >= 0x8000 && index < 0xA000){ //vram
 		if(vram_bank == 0)
 			memory[index] = value;
-		else
+		else{
 			cgb_vram[index - 0x8000] = value;
+			//std::cout << std::hex << index << " " << (int)value << std::endl;
+		}
 	}
 
 	else if((index >= 0xA000 && index < 0xC000))
@@ -381,7 +397,13 @@ void _memory::write_to_hram(const uint16_t index, const uint8_t value){
 		memory[index] = value;
 	}
 
+
+	else if(index == 0xFF4D){
+		memory[index] = value;
+	}
+
 	else if(index == 0xFF4F){
+	
 
 		if(gb_type != dmg){
 			memory[index] = value;
@@ -393,6 +415,40 @@ void _memory::write_to_hram(const uint16_t index, const uint8_t value){
 			
 		
 	}
+
+	else if(index == 0xFF55){
+		hdma_request = true;
+		if(hblank_dma_time && !(value & 1 << 7)){
+			hblank_dma_time = false;
+			hdma_request = false;
+			memory[index] = value | 1 << 7;
+		}
+		else
+			memory[index] = value;
+	}
+
+
+
+	else if(index == 0xFF69){
+		
+		uint8_t idx = memory[0xFF68] & 0x3F;
+		bg_palette_ram[idx] = value;
+		memory[index] = value;
+		if(memory[0xFF68] & 1 << 7)
+			memory[0xFF68] = 0x80 | ((idx + 1) & 0x3F);
+	
+	}
+
+	else if(index == 0xFF6B){
+		
+		uint8_t idx = memory[0xFF6A] & 0x3F;
+		ob_palette_ram[idx] = value;
+		memory[index] = value;
+		if(memory[0xFF6A] & 1 << 7)
+			memory[0xFF6A] = 0x80 | ((idx + 1) & 0x3F);
+	
+	}
+
 
 	else if(index == 0xFF70){
 

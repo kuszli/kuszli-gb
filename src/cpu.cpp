@@ -32,7 +32,7 @@ void cpu::init_registers(){
 	
 	PC = 0x100;
 	SP = 0xFFFE;
-	A = 1;
+	A = 0x11;
 	F = 0xB0;
 	B = 0;
 	C = 0x13;
