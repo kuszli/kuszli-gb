@@ -186,7 +186,11 @@ void lcd_driver::fill_fifo_bgwin(const uint8_t* const* bg_map, const uint8_t* co
 			block_line_data = &bg_data[0][(int8_t)(bg_map[0][block]) * 16 + line * 2];
 		else{
 			uint8_t vram_bank = (bg_map[1][block] & 1 << 3) ? 1 : 0;
-			block_line_data = &bg_data[vram_bank][(int8_t)(bg_map[0][block]) * 16 + line * 2];
+
+			if(!(bg_map[1][block] & 1 << 6))
+				block_line_data = &bg_data[vram_bank][(int8_t)(bg_map[0][block]) * 16 + line * 2];
+			else
+				block_line_data = &bg_data[vram_bank][(int8_t)(bg_map[0][block]) * 16 + (7-line) * 2];
 		}
 	}
 			
@@ -195,7 +199,10 @@ void lcd_driver::fill_fifo_bgwin(const uint8_t* const* bg_map, const uint8_t* co
 			block_line_data = &bg_data[0][bg_map[0][block] * 16 + line * 2];
 		else{
 			uint8_t vram_bank = (bg_map[1][block] & 1 << 3) ? 1 : 0;
-			block_line_data = &bg_data[vram_bank][ bg_map[0][block] * 16 + line * 2];
+			if(!(bg_map[1][block] & 1 << 6))
+				block_line_data = &bg_data[vram_bank][ bg_map[0][block] * 16 + line * 2];
+			else
+				block_line_data = &bg_data[vram_bank][ bg_map[0][block] * 16 + (7-line) * 2];
 		}
 	}
 
@@ -211,10 +218,16 @@ void lcd_driver::fill_fifo_bgwin(const uint8_t* const* bg_map, const uint8_t* co
 	else{
 
 		const uint8_t* cgb_pal = &cgb_bg_pal[ 8 * ((bg_map[1][block] & 0x7)) ];
-		for(uint8_t i = 0; i < 8; ++i){
-			pal = get_palette_index(block_line_data, i);
-			pixel_fifo->push_back(pixel(get_pixel_rgb(cgb_pal, pal), 0, bg));
-		}
+
+
+			for(uint8_t i = 0; i < 8; ++i){
+				if(!(bg_map[1][block] & 1 << 5))
+					pal = get_palette_index(block_line_data, i);
+				else
+					pal = get_palette_index_rev(block_line_data, i);
+				pixel_fifo->push_back(pixel(get_pixel_rgb(cgb_pal, pal), 0, bg));
+			}
+		
 
 	}
 
