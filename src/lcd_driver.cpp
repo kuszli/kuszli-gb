@@ -532,7 +532,7 @@ void lcd_driver::update(uint8_t cycles){
 			if(LY_counter >= cycles_per_scanline){
 				inc_LY();
 				if(lcd_registers[LY] == 153)
-					LY_counter = 452; //153rd line last very short
+					LY_counter = 454; //153rd line last very short
 				else
 					LY_counter = 0;
 			}

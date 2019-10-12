@@ -91,7 +91,7 @@ void _memory::connect_rom(const std::string& rom_name){
 	rom->read((char*)memory, 0x8000);
 	rom->seekg(0, rom->beg);
 
-	if(memory[0x148] <= 0x6)
+	if(memory[0x148] <= 0x7)
 		rom_banks = new uint8_t[length];
 	
 	else

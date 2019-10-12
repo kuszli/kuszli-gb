@@ -46,7 +46,7 @@ void gameboy::run(){
 		_audio_controller->update(cycles/_cpu->speed());
 		_joypad->update(button);
 		_cpu->handle_interrupts(_interrupts->check());
-		
+
 		if(memory->operator[](0xFF44) == 153){
 			break;
 		}
