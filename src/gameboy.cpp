@@ -42,10 +42,11 @@ void gameboy::run(){
 		cycles = _cpu->execute(_cpu->decode());
 		_timer->update(cycles);
 		_dma->update(cycles);
-		_lcd_driver->update(cycles);
+		_lcd_driver->update(cycles/_cpu->speed());
+		_audio_controller->update(cycles/_cpu->speed());
 		_joypad->update(button);
 		_cpu->handle_interrupts(_interrupts->check());
-		_audio_controller->update(cycles);
+		
 		if(memory->operator[](0xFF44) == 153){
 			break;
 		}

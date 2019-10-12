@@ -16,6 +16,8 @@ cpu::cpu(_memory* mem){
 
 	CB_array = new (uint8_t (cpu::*[256])()){ CB_ARRAY };
 
+	cpu_speed = 1;
+
 	regs = new uint8_t*[8]{&A,&F,&B,&C,&D,&E,&H,&L};
 	regs16 = new uint16_t*[2]{&SP,&PC};
 
@@ -239,6 +241,11 @@ uint8_t cpu::RRCA(){
 
 uint8_t cpu::STOP(){
 	//_state = stopped;
+	if((*memory)[0xFF4D] & 1 << 0){
+		cpu_speed = (*memory)[0xFF4D] & 1 << 7 ? 1 : 2;
+		(*memory)[0xFF4D] = (cpu_speed - 1) << 7;
+	}
+
 	PC++;
 	return 4;
 }

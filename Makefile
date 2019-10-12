@@ -1,4 +1,4 @@
-CXXFLAGS = -fPIC -c -std=c++11 
+CXXFLAGS = -fPIC -c -std=c++11 -O2 
 LIBS = -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 OBJ = obj
 SRC = src

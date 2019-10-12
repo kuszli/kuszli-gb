@@ -50,6 +50,8 @@ carry flag (4 most significant bits)
 	bool IME; //Interrupt Master Enable
 
 	bool EI_scheduled;
+
+	uint8_t cpu_speed;
 	
 	const uint8_t interrupt_address[5] = {0x40, 0x48, 0x50, 0x58, 0x60};
 
@@ -834,6 +836,7 @@ public:
 	uint8_t execute(const uint8_t opcode);
 	bool handle_interrupts(uint8_t addr);
 	void reset();
+	const uint8_t speed() { return cpu_speed; }
 	uint8_t** regs;
 	uint16_t** regs16;
 

@@ -45,6 +45,8 @@ int main(int argc, char** argv){
 
 		if(VBLANK_IN_MICROSECONDS - std::chrono::duration_cast<std::chrono::microseconds>(end-start).count() > 0)
 			usleep(VBLANK_IN_MICROSECONDS - std::chrono::duration_cast<std::chrono::microseconds>(end-start).count()); 
+		//else
+			//std::cout << "Not on time\n";
 		
 
 	}

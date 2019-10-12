@@ -24,7 +24,7 @@ lcd_driver::lcd_driver(_memory* mem){
 	oam = &(*mem)[OAM];
 
 	gb_type = mem->get_gb_type();
-	std::cout << gb_type << std::endl;
+
 	cgb_bg_pal = mem->bg_palette_mem();
 	cgb_ob_pal = mem->ob_palette_mem();
 

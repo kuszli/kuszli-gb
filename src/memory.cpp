@@ -399,7 +399,7 @@ void _memory::write_to_hram(const uint16_t index, const uint8_t value){
 
 
 	else if(index == 0xFF4D){
-		memory[index] = value;
+		memory[index] = value & 0x7F | memory[index] & 1 << 7;
 	}
 
 	else if(index == 0xFF4F){

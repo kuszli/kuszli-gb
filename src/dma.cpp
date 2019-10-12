@@ -28,8 +28,8 @@ void dma::transfer_cgb(){
 
 		std::memmove((void*)&(*memory)[0x8000 + hdma_dest], (void*)&(*memory)[hdma_src], 0x10);
 		--hdma_len;
-		memory->write(0xFF55, hdma_len & 0x7F);// (*memory)[0xFF55] = hdma_len & 0x7F;
-		
+		//(*memory)[0xFF55] = hdma_len & 0x7F;
+		memory->write(0xFF55, hdma_len & 0x7F);// 
 		if(hdma_len == 0xFF){
 			memory->hblank_dma_time = false;
 			(*memory)[0xFF55] = 0xFF;
