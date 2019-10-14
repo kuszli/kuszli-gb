@@ -6,6 +6,7 @@
 #include "wav_header.hh"
 #include <cstdint>
 #include <vector>
+#include "gameboy.hh"
 
 	extern sf::SoundBuffer buffer;
 	extern sf::Sound sound;
@@ -43,7 +44,7 @@ class sfml_interface{
 
 public:
 
-	sfml_interface(bool dbg);
+	sfml_interface(bool dbg, _gb_type gbt);
 	~sfml_interface();
 	uint8_t get_key() const { return key; }
 	void display(uint8_t* pixels);

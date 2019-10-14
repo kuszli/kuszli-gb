@@ -26,7 +26,7 @@ _memory::_memory(){
 	chan3_trigg = false;
 	chan4_trigg = false;
 	mbc_type = none;
-	gb_type = cgb_compatible;
+	gb_type = dmg;
 }
 
 _memory::~_memory(){

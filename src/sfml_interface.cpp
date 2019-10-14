@@ -31,7 +31,7 @@ const char* fragment_cgb = R"glsl(
 )glsl";
 
 
-sfml_interface::sfml_interface(bool dbg){
+sfml_interface::sfml_interface(bool dbg, _gb_type gbt){
 	window.create(sf::VideoMode(160, 144), "kuszli-gb");
 	window.setSize(screen_size);
 	texture.create(160,144);
@@ -62,7 +62,7 @@ sfml_interface::sfml_interface(bool dbg){
 	palette.create(4,1);
    palette.update(pal);
 
-	if(0){
+	if(gbt == dmg){
 		if(!shader.loadFromMemory(fragment_dmg, sf::Shader::Fragment)){
        	 std::cerr << "Shader loading error\n";
    	 }

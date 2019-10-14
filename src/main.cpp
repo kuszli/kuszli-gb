@@ -23,7 +23,7 @@ int main(int argc, char** argv){
 	gameboy* gb = new gameboy; 
 	gb->insert_cart(rom_name);
 	gb->set_debug(dbg);
-	sfml_interface interface(dbg);
+	sfml_interface interface(dbg, gb->get_gb_type());
 	gb->set_audio_callback_fun(m_audio::play_audio);
 	
 	while(interface.is_window_open()){

@@ -23,7 +23,7 @@ lcd_driver::lcd_driver(_memory* mem){
 
 	oam = &(*mem)[OAM];
 
-	gb_type = mem->get_gb_type();
+	gb_type = dmg;
 
 	cgb_bg_pal = mem->bg_palette_mem();
 	cgb_ob_pal = mem->ob_palette_mem();
@@ -41,11 +41,8 @@ lcd_driver::lcd_driver(_memory* mem){
 	old_stat_signal = 0;
 	oam_search_done = false;
 	dbg = false;
-	//screen_buffer = new uint8_t*[144];
+
 	screen_buffer = new uint8_t[160*144*4];
-//	for(int i = 0; i < 144; ++i){
-//		screen_buffer[i] = new uint8_t[160*4];
-//	}
 
 	oam_debug_buffer = new uint8_t*[128];
 

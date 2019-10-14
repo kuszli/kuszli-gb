@@ -19,6 +19,7 @@ class gameboy{
 	uint8_t cycles;
 	uint8_t button;
 
+	_gb_type gb_type;
 	_memory* memory;
 	cpu* _cpu;
 	timer* _timer;
@@ -32,9 +33,10 @@ class gameboy{
 public:
 	gameboy();
 	~gameboy();
+	_gb_type get_gb_type() { std::cout << gb_type << std::endl; return gb_type; }
 	void set_buttons(uint8_t butt){button = butt;}
 	void run();
-	void insert_cart(const std::string& game_name){memory->connect_rom(game_name);}
+	void insert_cart(const std::string& game_name);
 	void pull_out_cart();
 	void reset() {_cpu->reset();}
 	void set_debug(bool opt){_lcd_driver->set_oam_viewer(opt);}

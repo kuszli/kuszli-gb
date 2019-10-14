@@ -115,6 +115,7 @@ public:
 
 	lcd_driver(_memory* mem);
 	~lcd_driver();
+	void set_gb_type(_gb_type t) { gb_type = t; }
 	void update(const uint8_t cycles);
 	uint8_t debug(){ return lcd_registers[LY]; }
 	void set_oam_viewer(bool opt){ dbg = opt; }

@@ -2,7 +2,7 @@
 
 
 
-gameboy::gameboy(): button(0), cycles(0)
+gameboy::gameboy(): button(0), cycles(0), gb_type(dmg)
 {
 	memory = new _memory;
 	_cpu = new cpu(memory);
@@ -33,6 +33,14 @@ gameboy::~gameboy(){
 	_interrupts = nullptr;
 	delete _audio_controller;
 	_audio_controller = nullptr;
+
+}
+
+void gameboy::insert_cart(const std::string &game_name){
+
+	memory->connect_rom(game_name);
+	gb_type = memory->get_gb_type();
+	_lcd_driver->set_gb_type(gb_type);
 
 }
 
