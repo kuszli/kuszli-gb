@@ -30,14 +30,18 @@ struct _sprite{
 
 enum pixel_type{
 	bg,
-	oam,
+	obj,
 };
 
 struct pixel{
 	uint16_t value;
-	uint8_t priority;
+	uint8_t x_coord;
+	uint8_t oam_idx;
+	uint8_t color_no;
+	bool priority_over_obj;
 	pixel_type type;
-	pixel(uint16_t v, uint8_t p, pixel_type t): value(v), priority(p), type(t){}
+	pixel(uint16_t v, uint8_t no, pixel_type t): value(v), x_coord(0), oam_idx(0), color_no(no), type(t){}
+	void create_sprite_px(uint16_t v, uint8_t x, uint8_t id, uint8_t no) { value = v; x_coord = x; oam_idx = id; color_no = no; type = obj; }
 };
 
 enum interrupt_type{

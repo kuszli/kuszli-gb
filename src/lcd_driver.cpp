@@ -208,7 +208,7 @@ void lcd_driver::fill_fifo_bgwin(const uint8_t* const* bg_map, const uint8_t* co
 
 		for(uint8_t i = 0; i < 8; ++i){
 			pal = get_palette_index(block_line_data, i);
-			pixel_fifo->push_back(pixel(get_pixel_mono(&lcd_registers[BGP], pal), 0, bg));
+			pixel_fifo->push_back(pixel(get_pixel_mono(&lcd_registers[BGP], pal), pal, bg));
 		}
 	}
 
@@ -222,7 +222,8 @@ void lcd_driver::fill_fifo_bgwin(const uint8_t* const* bg_map, const uint8_t* co
 					pal = get_palette_index(block_line_data, i);
 				else
 					pal = get_palette_index_rev(block_line_data, i);
-				pixel_fifo->push_back(pixel(get_pixel_rgb(cgb_pal, pal), 0, bg));
+				pixel_fifo->push_back(pixel(get_pixel_rgb(cgb_pal, pal), pal, bg));
+				pixel_fifo->back().priority_over_obj = bg_map[1][block] & 1 << 7 ? true : false;
 			}
 		
 
@@ -239,26 +240,70 @@ void lcd_driver::fill_fifo_oam(const uint8_t oam_idx, const uint8_t shift = 0){
 
 	uint8_t pal;
 
-	for(uint8_t i = shift; i < 8; ++i){
+	if(gb_type == dmg){
 
-		if(sprite.h_flip)
-			pal = get_palette_index_rev(sprite.tile_data, i);
-		else
-			pal = get_palette_index(sprite.tile_data, i);
+		for(uint8_t i = shift; i < 8; ++i){
 
-		if(sprite.priority_over_bg){ 
-			if(pal != 0){
-				if( (pixel_fifo->at(i-shift).type == bg) || (pixel_fifo->at(i-shift).priority > oam_idx) ) //this pixel is bg pixel or sprite pixel with lower priority
-					pixel_fifo->at(i-shift).value = gb_type == dmg ? get_pixel_mono(sprite.palette, pal) : get_pixel_rgb(sprite.palette, pal);
-					pixel_fifo->at(i-shift).priority = oam_idx;
+			if(sprite.h_flip)
+				pal = get_palette_index_rev(sprite.tile_data, i);
+			else
+				pal = get_palette_index(sprite.tile_data, i);
+
+
+			if(pixel_fifo->at(i-shift).type == bg){//background pixel
+				if(!sprite.priority_over_bg){
+					if(pixel_fifo->at(i-shift).color_no == 0 && pal != 0)
+						pixel_fifo->at(i-shift).create_sprite_px(get_pixel_mono(sprite.palette, pal), sprite.sx, oam_idx, pal);
+					}
+				else{
+					if(pal != 0)
+						pixel_fifo->at(i-shift).create_sprite_px(get_pixel_mono(sprite.palette, pal), sprite.sx, oam_idx, pal);
+					}
 			}
-		}
-		else{
-			if(pixel_fifo->at(i-shift).value == (lcd_registers[BGP] & 0x3))
-				pixel_fifo->at(i-shift).value = gb_type == dmg ? get_pixel_mono(sprite.palette, pal) : get_pixel_rgb(sprite.palette, pal);
-				pixel_fifo->at(i-shift).priority = oam_idx;
+
+			else{
+				if(pixel_fifo->at(i-shift).x_coord > sprite.sx && pal != 0)
+					pixel_fifo->at(i-shift).create_sprite_px(get_pixel_mono(sprite.palette, pal), sprite.sx, oam_idx, pal);
+				else if(pixel_fifo->at(i-shift).x_coord == sprite.sx){
+					if(pixel_fifo->at(i-shift).oam_idx > oam_idx && pal != 0)
+						pixel_fifo->at(i-shift).create_sprite_px(get_pixel_mono(sprite.palette, pal), sprite.sx, oam_idx, pal);
+				}
+				
+			}
+
 		}
 	}
+
+	else{
+
+		for(uint8_t i = shift; i < 8; ++i){
+
+			if(sprite.h_flip)
+				pal = get_palette_index_rev(sprite.tile_data, i);
+			else
+				pal = get_palette_index(sprite.tile_data, i);
+
+			if(pixel_fifo->at(i-shift).type == bg){ //background pixel
+				if(!sprite.priority_over_bg || pixel_fifo->at(i-shift).priority_over_obj){
+					if(pixel_fifo->at(i-shift).color_no == 0 && pal != 0)
+						pixel_fifo->at(i-shift).create_sprite_px(get_pixel_rgb(sprite.palette, pal), sprite.sx, oam_idx, pal);
+				}
+				else{
+					if(pal != 0)
+						pixel_fifo->at(i-shift).create_sprite_px(get_pixel_rgb(sprite.palette, pal), sprite.sx, oam_idx, pal);
+				}
+			}
+
+			else{
+				if(pixel_fifo->at(i-shift).oam_idx > oam_idx && pal != 0)
+					pixel_fifo->at(i-shift).create_sprite_px(get_pixel_rgb(sprite.palette, pal), sprite.sx, oam_idx, pal);
+	
+			}
+
+		}
+
+	}
+
 
 	visible_sprites->pop();
 }
