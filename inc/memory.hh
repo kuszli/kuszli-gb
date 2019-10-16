@@ -79,6 +79,11 @@ public:
 	bool hdma_request;
 	bool dma_time;
 	bool hblank_dma_time;
+	bool hdma_transfer;
+	uint8_t gdma_transfer;
+	bool hdma_src_trigger;
+	bool hdma_dest_trigger;
+	bool serial_trigg;
 	bool chan1_trigg;
 	bool chan2_trigg;
 	bool chan3_trigg;

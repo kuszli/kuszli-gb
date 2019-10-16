@@ -11,6 +11,11 @@ _memory::_memory(){
 	dma_request = false;
 	hblank_dma_time = false;
 	hdma_request = false;
+	hdma_transfer = false;
+	gdma_transfer = 0;
+	hdma_src_trigger = false;
+	hdma_dest_trigger = false;
+	serial_trigg = false;
 	rom = nullptr;
 	external_ram = nullptr;
 	rom_banks = nullptr;
@@ -109,6 +114,7 @@ void _memory::connect_rom(const std::string& rom_name){
 
 	memory[0xFF4F] = 0;
 	memory[0xFF4D] = 0;
+	memory[0xFF55] = 0xFF;
 
 	if(memory[0x147] > 0 && memory[0x147] <=3)
 		mbc_type = mbc1;
@@ -261,6 +267,7 @@ uint8_t& _memory::operator[](const uint16_t index){
 
 	}
 
+
 	else if(index == 0xFF69)
 		return bg_palette_ram[memory[0xFF68] & 0x3F];
 
@@ -344,6 +351,19 @@ void _memory::write_to_hram(const uint16_t index, const uint8_t value){
 	if(index == 0xFF00)
 		memory[index] = value | 0xCF;
 
+	if(index == 0xFF02){
+
+		if(value & 1 << 7)
+			serial_trigg = true;
+
+		if(gb_type == dmg)
+			memory[index] = value & ~(1 << 1);
+
+		else
+			memory[index] = value;
+
+	}
+
 	else if(index == 0xFF03 || index == 0xFF04){
 		memory[0xFF03] = 0;
 		memory[0xFF04] = 0;
@@ -361,6 +381,15 @@ void _memory::write_to_hram(const uint16_t index, const uint8_t value){
 	else if(index == 0xFF19){
 		if(value & 1 << 7)
 			chan2_trigg = true;
+		memory[index] = value;
+	}
+
+	else if(index == 0xFF1A){
+		if(!(value & 1 << 7))
+			memory[0xFF26] &= ~(1 << 2);
+		else
+			memory[0xFF26] |= 1 << 2;
+
 		memory[index] = value;
 	}
 
@@ -392,7 +421,7 @@ void _memory::write_to_hram(const uint16_t index, const uint8_t value){
 		memory[index] = 0;
 	
 	else if(index == 0xFF46){
-		//dma_time = true;
+
 		dma_request = true;
 		memory[index] = value;
 	}
@@ -403,7 +432,6 @@ void _memory::write_to_hram(const uint16_t index, const uint8_t value){
 	}
 
 	else if(index == 0xFF4F){
-	
 
 		if(gb_type != dmg){
 			memory[index] = value;
@@ -416,13 +444,27 @@ void _memory::write_to_hram(const uint16_t index, const uint8_t value){
 		
 	}
 
+	else if(index == 0xFF51 || index == 0xFF52){
+		hdma_src_trigger = true;
+		memory[index] = value;
+	}
+
+	else if(index == 0xFF53 || index == 0xFF54){
+		hdma_dest_trigger = true;
+		memory[index] = value;
+	}
+
 	else if(index == 0xFF55){
+		
+
 		hdma_request = true;
+
 		if(hblank_dma_time && !(value & 1 << 7)){
 			hblank_dma_time = false;
 			hdma_request = false;
 			memory[index] = value | 1 << 7;
 		}
+
 		else
 			memory[index] = value;
 	}

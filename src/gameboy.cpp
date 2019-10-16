@@ -2,7 +2,7 @@
 
 
 
-gameboy::gameboy(): button(0), cycles(0), gb_type(dmg)
+gameboy::gameboy(): button(0), cycles(0), cycles_count(0), gb_type(dmg)
 {
 	memory = new _memory;
 	_cpu = new cpu(memory);
@@ -12,6 +12,7 @@ gameboy::gameboy(): button(0), cycles(0), gb_type(dmg)
 	_joypad = new joypad(memory);
 	_interrupts = new interrupts(memory);
 	_audio_controller = new audio_controller(memory);
+	_serial = new serial(memory);
 }
 
 
@@ -33,6 +34,8 @@ gameboy::~gameboy(){
 	_interrupts = nullptr;
 	delete _audio_controller;
 	_audio_controller = nullptr;
+	delete _serial;
+	_serial = nullptr;
 
 }
 
@@ -47,15 +50,27 @@ void gameboy::insert_cart(const std::string &game_name){
 void gameboy::run(){
 
 	for(;;){
+
+		if(_dma->hdma_transfer){
+			cycles = 4 + 32*_cpu->speed();
+			--_dma->transfer_size;
+			if(_dma->transfer_size == 0)
+				_dma->hdma_transfer = false;
+		}
+		else
+
 		cycles = _cpu->execute(_cpu->decode());
 		_timer->update(cycles);
 		_dma->update(cycles);
 		_lcd_driver->update(cycles/_cpu->speed());
 		_audio_controller->update(cycles/_cpu->speed());
+		_serial->update(cycles);
 		_joypad->update(button);
 		_cpu->handle_interrupts(_interrupts->check());
-
+		//std::cout << *_cpu->regs16[1] << std::endl;
+		cycles_count += cycles;
 		if(memory->operator[](0xFF44) == 153){
+			cycles_count = 0;
 			break;
 		}
 	}

@@ -589,7 +589,7 @@ void lcd_driver::update(uint8_t cycles){
 				if(lcd_registers[LY] == 153)
 					LY_counter = 454; //153rd line last very short
 				else
-					LY_counter = 0;
+					LY_counter -= cycles_per_scanline;
 			}
 			break;
 		}
@@ -601,8 +601,10 @@ void lcd_driver::update(uint8_t cycles){
 	mode_counter[mode] += cycles;
 
 	if(mode_counter[mode] >= mode_cycles[mode]){
-		mode_counter[mode] = 0;	
+		uint8_t tmp = mode_counter[mode] - mode_cycles[mode];
+		mode_counter[mode] = 0;
 		switch_mode();
+		mode_counter[mode] += tmp;
 	}
 
 	check_for_interrupts();			

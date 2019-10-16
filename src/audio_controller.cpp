@@ -56,7 +56,7 @@ void audio_controller::update(const uint8_t cycles){
 	counter += cycles;
 
 	if(counter >= 4194304/sampling_freq){
-		counter = 0;
+		counter -= 4194304/sampling_freq;
 
 		if(!(audio_registers[AUDIO_CONT] & 1 << 7)){
 			sample_buffer[curr_buff_pos++] = 0;

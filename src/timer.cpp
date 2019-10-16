@@ -56,9 +56,10 @@ void timer::update(const uint8_t cycles){
 		while(timer_counter >= clock_cyc()){
 			timer_counter -= clock_cyc();
 			count_timer();
+			
 		}
 	
-		timer_counter = 0;
+		//timer_counter = 0;
 
 	}
 	

@@ -87,6 +87,7 @@ uint8_t cpu::decode(){
 }
 
 uint8_t cpu::execute(const uint8_t opcode){
+
 	return (this->*opcode_array[opcode])();
 }
 
@@ -506,7 +507,8 @@ uint8_t cpu::LD_REG8_HLADDR(uint8_t &reg){
 }
 
 uint8_t cpu::HALT(){
-	if( ((*memory)[IE_REGISTER] & (*memory)[IF_REGISTER]) & 0x1F )
+
+	if( !IME && (((*memory)[IE_REGISTER] & (*memory)[IF_REGISTER]) & 0x1F) )
 		--PC;
 
 	else

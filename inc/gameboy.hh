@@ -12,12 +12,14 @@
 #include "interrupts.hh"
 #include "memory.hh"
 #include "audio_controller.hh"
+#include "serial.hh"
 
 class gameboy{
 
 	const uint32_t cycles_per_frame = 70224;
 	uint8_t cycles;
 	uint8_t button;
+	uint32_t cycles_count;
 
 	_gb_type gb_type;
 	_memory* memory;
@@ -28,6 +30,7 @@ class gameboy{
 	joypad* _joypad;
 	interrupts* _interrupts;
 	audio_controller* _audio_controller;
+	serial* _serial;
 
 
 public:
