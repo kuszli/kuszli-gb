@@ -268,10 +268,11 @@ uint8_t& _memory::operator[](const uint16_t index){
 	}
 
 
-	else if(index == 0xFF69)
+	else if(index == 0xFF69 && gb_type != dmg)
 		return bg_palette_ram[memory[0xFF68] & 0x3F];
+	
 
-	else if(index == 0xFF6B)
+	else if(index == 0xFF6B && gb_type != dmg)
 		return ob_palette_ram[memory[0xFF6A] & 0x3F];
 
 	else
@@ -294,10 +295,9 @@ void _memory::write(const uint16_t index, const uint8_t value){
 	else if(index >= 0x8000 && index < 0xA000){ //vram
 		if(vram_bank == 0)
 			memory[index] = value;
-		else{
+		else
 			cgb_vram[index - 0x8000] = value;
-			//std::cout << std::hex << index << " " << (int)value << std::endl;
-		}
+
 	}
 
 	else if((index >= 0xA000 && index < 0xC000))
@@ -316,6 +316,7 @@ void _memory::write(const uint16_t index, const uint8_t value){
 //	else if(index >= 0xE000 && index < 0xFE00){ //echo ram
 //		memory[index] = value;
 //		memory[0xC000 + index - 0xE000] = value;
+
 //	}
 
 	else if(index >= 0xFE00 && index < 0xFEA0){ //oam ram
@@ -348,6 +349,7 @@ void _memory::write_to_ex_ram(const uint16_t index, const uint8_t value){
 
 void _memory::write_to_hram(const uint16_t index, const uint8_t value){
 
+	
 	if(index == 0xFF00)
 		memory[index] = value | 0xCF;
 
@@ -434,30 +436,33 @@ void _memory::write_to_hram(const uint16_t index, const uint8_t value){
 	else if(index == 0xFF4F){
 
 		if(gb_type != dmg){
-			memory[index] = value;
 			vram_bank = value & 0x1;
+			memory[index] = value & 0x1;
 		}
-
 		else
 			memory[index] = 0;
-			
-		
 	}
 
 	else if(index == 0xFF51 || index == 0xFF52){
-		hdma_src_trigger = true;
+
+		if(gb_type != dmg)
+			hdma_src_trigger = true;
 		memory[index] = value;
+	
 	}
 
 	else if(index == 0xFF53 || index == 0xFF54){
-		hdma_dest_trigger = true;
+
+		if(gb_type != dmg)
+			hdma_dest_trigger = true;
 		memory[index] = value;
+
 	}
 
 	else if(index == 0xFF55){
-		
 
-		hdma_request = true;
+		if(gb_type != dmg)
+			hdma_request = true;
 
 		if(hblank_dma_time && !(value & 1 << 7)){
 			hblank_dma_time = false;
@@ -482,7 +487,7 @@ void _memory::write_to_hram(const uint16_t index, const uint8_t value){
 	}
 
 	else if(index == 0xFF6B){
-		
+
 		uint8_t idx = memory[0xFF6A] & 0x3F;
 		ob_palette_ram[idx] = value;
 		memory[index] = value;
@@ -494,10 +499,10 @@ void _memory::write_to_hram(const uint16_t index, const uint8_t value){
 
 	else if(index == 0xFF70){
 
-		if(gb_type != dmg){
-			memory[index] = value;
+		if(gb_type != dmg)
 			wram_bank = value & 0x7;
-		}
+		
+		memory[index] = value;
 
 	}
 

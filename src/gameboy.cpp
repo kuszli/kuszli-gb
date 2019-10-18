@@ -57,9 +57,10 @@ void gameboy::run(){
 			if(_dma->transfer_size == 0)
 				_dma->hdma_transfer = false;
 		}
-		else
 
-		cycles = _cpu->execute(_cpu->decode());
+		else
+			cycles = _cpu->execute(_cpu->decode());
+
 		_timer->update(cycles);
 		_dma->update(cycles);
 		_lcd_driver->update(cycles/_cpu->speed());
@@ -67,7 +68,7 @@ void gameboy::run(){
 		_serial->update(cycles);
 		_joypad->update(button);
 		_cpu->handle_interrupts(_interrupts->check());
-		//std::cout << *_cpu->regs16[1] << std::endl;
+		//std::cout << std::hex << *_cpu->regs16[1] << std::endl;
 		cycles_count += cycles;
 		if(memory->operator[](0xFF44) == 153){
 			cycles_count = 0;

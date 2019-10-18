@@ -97,15 +97,12 @@ void dma::update(uint8_t cycles){
 	if(memory->hblank_dma_time){
 
 		if( ((*memory)[0xFF41] & 0x3) == 0 && last_lcd_mode != 0){ //hblank mode
-			
-				transfer_cgb();
-				hdma_transfer = true;
-				transfer_size = 1;
-
+			transfer_cgb();
+			hdma_transfer = true;
+			transfer_size = 1;
 		}
 	
-			
-			last_lcd_mode = (*memory)[0xFF41] & 0x3;
+		last_lcd_mode = (*memory)[0xFF41] & 0x3;
 	}
 
 

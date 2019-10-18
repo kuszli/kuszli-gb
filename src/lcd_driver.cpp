@@ -601,10 +601,10 @@ void lcd_driver::update(uint8_t cycles){
 	mode_counter[mode] += cycles;
 
 	if(mode_counter[mode] >= mode_cycles[mode]){
-		uint8_t tmp = mode_counter[mode] - mode_cycles[mode];
+		//uint8_t tmp = mode_counter[mode] - mode_cycles[mode];
 		mode_counter[mode] = 0;
 		switch_mode();
-		mode_counter[mode] += tmp;
+		//mode_counter[mode] += tmp;
 	}
 
 	check_for_interrupts();			
