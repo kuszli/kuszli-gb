@@ -64,16 +64,14 @@ void gameboy::run(){
 		_timer->update(cycles);
 		_dma->update(cycles);
 		_lcd_driver->update(cycles/_cpu->speed());
-		_audio_controller->update(cycles/_cpu->speed());
+		//_audio_controller->update(cycles/_cpu->speed());
 		_serial->update(cycles);
 		_joypad->update(button);
 		_cpu->handle_interrupts(_interrupts->check());
-		//std::cout << std::hex << *_cpu->regs16[1] << std::endl;
-		cycles_count += cycles;
-		if(memory->operator[](0xFF44) == 153){
-			cycles_count = 0;
+
+		if(memory->operator[](0xFF44) == 153)
 			break;
-		}
+		
 	}
 
 

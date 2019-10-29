@@ -123,6 +123,7 @@ void lcd_driver::draw_pixel(const uint16_t color){
 
 	if(gb_type == dmg)
 		screen_buffer[(lcd_registers[LY]*160 + curr_px++)*4] = color;
+
 	else{
 		screen_buffer[(lcd_registers[LY]*160 + curr_px)*4] = color & 0x1F;
 		screen_buffer[(lcd_registers[LY]*160 + curr_px)*4 + 1] = (color & 0x3E0) >> 5;
@@ -130,7 +131,6 @@ void lcd_driver::draw_pixel(const uint16_t color){
 		++curr_px;
 	}
 	
-		
 }
 
 uint8_t inline lcd_driver::get_pixel_mono(const uint8_t* pal, const uint8_t color){
@@ -327,7 +327,7 @@ void lcd_driver::search_oam(){
 
 }
 			
-
+//find which sprite line is common whith current lcd line
 uint8_t lcd_driver::find_common_line(const uint8_t oam_index){
 
 	int16_t top_line = oam[oam_index*4] - 16;
@@ -348,7 +348,6 @@ uint8_t lcd_driver::find_common_line(const uint8_t oam_index){
 
 void lcd_driver::draw_blank_line(){
 	for(int i = 0; i < 160; ++i){
-		//screen_buffer[lcd_registers[LY]][i*4] = 0;
 		screen_buffer[(lcd_registers[LY]*160 + i)*4] = 0;
 	}
 }
@@ -357,28 +356,25 @@ void lcd_driver::draw_blank_line(){
 	
 void lcd_driver::draw_line(){
 	
-	mode_counter[mode] += (10 - visible_sprites->size()) * cycles_per_sprite; //adjust mode 3 timing 
+	mode_counter[mode] += (10 - visible_sprites->size()) * cycles_per_sprite; //adjust mode 3 timing - it depends on number of sprites 
 	cycles_to_add = visible_sprites->size() * cycles_per_sprite; 
 
 	bool windowing = false;
 
-	uint8_t** bg_tile_data = (lcd_registers[LCDC] & 1 << 4) ? vram1 : vram2;
-	uint8_t** bg_tile_nums =  (lcd_registers[LCDC] & 1 << 3) ? chr_code2 : chr_code1;
-	uint8_t** window_tile_nums = (lcd_registers[LCDC] & 1 << 6) ? chr_code2 : chr_code1;
+	uint8_t** bg_tile_data = (lcd_registers[LCDC] & 1 << 4) ? vram1 : vram2; // 0x8000 or 0x8800
+	uint8_t** bg_tile_nums =  (lcd_registers[LCDC] & 1 << 3) ? chr_code2 : chr_code1; //0x9800 or 0x9C00
+	uint8_t** window_tile_nums = (lcd_registers[LCDC] & 1 << 6) ? chr_code2 : chr_code1; //same addresses as background tiles
 
-	uint16_t block = ( ((lcd_registers[SCY] + lcd_registers[LY]) % 256) / 8) * 32 + lcd_registers[SCX]/8;
+	uint16_t block = ( ((lcd_registers[SCY] + lcd_registers[LY]) % 256) / 8) * 32 + lcd_registers[SCX]/8; //current block from tile map
 	uint16_t row = (block/32 + 1)*32;
 	uint8_t line =  (lcd_registers[SCY] +lcd_registers[LY]) % 8;
 
-	uint8_t* block_line_data;
-	uint8_t** curr_nums;
+	uint8_t** curr_nums = bg_tile_nums;
 	uint8_t oam_idx;
 	uint8_t oam_x;
 	uint8_t x_off = lcd_registers[SCX] % 8;
-	uint8_t length = 32;
 
-	curr_px = 0;
-	curr_nums = bg_tile_nums;
+	curr_px = 0; //reset pixel horizontal position
 	pixel_fifo->clear(); //we don't need old pixels
 
 	fill_fifo_bgwin(curr_nums, bg_tile_data, block, windowing);
@@ -401,7 +397,7 @@ void lcd_driver::draw_line(){
 				if((curr_px >= lcd_registers[WX] - 7) && (lcd_registers[WY] <= lcd_registers[LY])){ //window coordinates
 					pixel_fifo->clear(); //prepare place for window tiles
 					curr_nums = window_tile_nums; //switch to window tiles
-					block = ((lcd_registers[LY] - lcd_registers[WY])/8) * 32;
+					block = ((lcd_registers[LY] - lcd_registers[WY])/8) * 32; //calculate block
 					windowing = true;
 					fill_fifo_bgwin(curr_nums, bg_tile_data, block, windowing);
 				}
@@ -426,7 +422,7 @@ void lcd_driver::draw_line(){
 		}
 
 		draw_pixel(pixel_fifo->front().value); //push (place pixels on screen)
-		pixel_fifo->pop_front();		
+		pixel_fifo->pop_front(); //remove last pixel from fifo	
 
 	}
 }
@@ -601,10 +597,8 @@ void lcd_driver::update(uint8_t cycles){
 	mode_counter[mode] += cycles;
 
 	if(mode_counter[mode] >= mode_cycles[mode]){
-		//uint8_t tmp = mode_counter[mode] - mode_cycles[mode];
 		mode_counter[mode] = 0;
 		switch_mode();
-		//mode_counter[mode] += tmp;
 	}
 
 	check_for_interrupts();			

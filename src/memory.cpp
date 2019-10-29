@@ -245,7 +245,7 @@ uint8_t& _memory::operator[](const uint16_t index){
 
 		if(ram_enable && ex_ram){
 
-			if(mbc_type == mbc3 && rtc_register > 0)
+			if(mbc_type == mbc3 && rtc_register >= 8)
 				return rtc_registers[rtc_register - 8];
 
 			else if(mbc_type == mbc2)
@@ -335,7 +335,7 @@ void _memory::write(const uint16_t index, const uint8_t value){
 void _memory::write_to_ex_ram(const uint16_t index, const uint8_t value){
 
 	if(ram_enable && ex_ram){
-		if(mbc_type == mbc3 && rtc_register > 0)
+		if(mbc_type == mbc3 && rtc_register >= 8)
 			rtc_registers[rtc_register - 8] = value;
 
 		else if(mbc_type == mbc2)
@@ -460,7 +460,7 @@ void _memory::write_to_hram(const uint16_t index, const uint8_t value){
 	}
 
 	else if(index == 0xFF55){
-
+		
 		if(gb_type != dmg)
 			hdma_request = true;
 
@@ -664,6 +664,17 @@ void _memory::save_ram(){
 	save_name = _rom_name.substr(0, dot);
 	save_name += ".sav";
 
+	if(mbc_type == mbc3){
+		std::string rtc_name = _rom_name.substr(0, dot) + ".rtc";
+		
+		std::fstream rtc(rtc_name.c_str(), std::ios::out | std::ios::binary);
+		if(!rtc.is_open())
+			throw std::runtime_error("RTC file creating error.");
+
+		rtc.write((char*)rtc_registers, 5);
+		rtc.close();
+	}
+
 	std::fstream save(save_name.c_str(), std::ios::out | std::ios::binary);
 	if(!save.is_open())
 		throw std::runtime_error("Save file creating error.");
@@ -683,6 +694,24 @@ void _memory::load_ram(){
 
 	save_name = _rom_name.substr(0, dot);
 	save_name += ".sav";
+
+	if(mbc_type == mbc3){
+		std::string rtc_name = _rom_name.substr(0, dot) + ".rtc";
+		
+		std::fstream rtc(rtc_name.c_str(), std::ios::in | std::ios::binary);
+		if(!rtc.is_open())
+			return;
+
+		rtc.seekg(0, rtc.end);
+		unsigned int length = rtc.tellg();
+		rtc.seekg(0, rtc.beg);
+
+		if(length != 5)
+			return;
+
+		rtc.read((char*)rtc_registers, 5);
+		rtc.close();
+	}
 
 	std::fstream save(save_name.c_str(), std::ios::in | std::ios::binary);
 	if(!save.is_open())

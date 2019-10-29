@@ -1334,7 +1334,6 @@ uint8_t cpu::EI(){
 }
 
 uint8_t cpu::ERR(){
-	//std::cout << "SP: " << std::hex << (int)SP << std::endl;
 	throw std::runtime_error("Illegal opcode.");
 	return 0;
 }
