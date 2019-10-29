@@ -69,8 +69,10 @@ void gameboy::run(){
 		_joypad->update(button);
 		_cpu->handle_interrupts(_interrupts->check());
 
-		if(memory->operator[](0xFF44) == 153){
-			break;	
+		if(memory->operator[](0xFF44) == 153)
+			break;
+
+	
 	}
 
 
