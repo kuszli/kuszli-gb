@@ -1,8 +1,6 @@
-
 #include "gameboy.hh"
 #include "sfml_interface.hh"
 #include "cmd_options.hh"
-#include <unistd.h>
 #include <chrono>
 #include <string>
 #include <stdlib.h>
@@ -15,6 +13,7 @@
 int main(int argc, char** argv){
 
 	unsigned char frame_count = 0;
+	int64_t time_elapsed;
 	bool dbg = false;
 	std::string rom_name;
 	if(!check_options(argc, argv, dbg, rom_name))
@@ -43,12 +42,11 @@ int main(int argc, char** argv){
 		
 		auto end = std::chrono::steady_clock::now();
 
-		if(VBLANK_IN_MICROSECONDS - std::chrono::duration_cast<std::chrono::microseconds>(end-start).count() > 0)
-			usleep(VBLANK_IN_MICROSECONDS - std::chrono::duration_cast<std::chrono::microseconds>(end-start).count()); 
+		time_elapsed = VBLANK_IN_MICROSECONDS - std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+		if( time_elapsed > 0)
+			sf::sleep(sf::microseconds(time_elapsed));
 		//else
 			//std::cout << "Not on time\n";
-		
-
 	}
 	
 	delete gb;
