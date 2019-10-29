@@ -14,18 +14,12 @@ sfml_audio::sfml_audio(gameboy* g, uint8_t channels, uint32_t sample_rate){
 
 bool sfml_audio::onGetData(Chunk& data){
 
-	while(gb->get_audio_buffer_size() == 0){
+	while((data.samples = gb->get_audio_buffer()) == nullptr){
 		if(stop_request)
-			break;
+			return false;
 	}
 
-	data.samples = gb->get_audio_buffer();
-	data.sampleCount = gb->get_audio_buffer_size();
-
-	while(data.samples == gb->get_busy_audio_buffer()){
-		if(stop_request)
-			break;
-	}
+	data.sampleCount = 4096;
 
 	return true;
 }

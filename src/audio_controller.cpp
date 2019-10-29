@@ -108,8 +108,12 @@ void audio_controller::switch_buffer(){
 
 
 const int16_t* audio_controller::get_buffer(){ 
-			
-	if(last_buffer == audio_buffer_data[0]){
+
+	if(last_buffer != sample_buffer)
+		return nullptr;
+	
+
+	if(sample_buffer == audio_buffer_data[0]){
 		last_buffer = audio_buffer_data[1];
 		return const_cast<const int16_t*>(audio_buffer_data[1]);
 	}
