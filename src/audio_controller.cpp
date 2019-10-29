@@ -66,7 +66,7 @@ void audio_controller::update(const uint8_t cycles){
 
 	if(counter >= 4194304/sampling_freq){
 
-		counter = 0;
+		counter -= 4194304/sampling_freq;
 
 		bool ch1_left_enable = (audio_registers[SOUND_LEVEL] & 1 << 0) ? true : false;
 		bool ch1_right_enable = (audio_registers[SOUND_LEVEL] & 1 << 4) ? true : false;
