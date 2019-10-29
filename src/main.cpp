@@ -1,5 +1,6 @@
 #include "gameboy.hh"
 #include "sfml_interface.hh"
+#include "sfml_audio.hh"
 #include "cmd_options.hh"
 #include <chrono>
 #include <string>
@@ -22,15 +23,17 @@ int main(int argc, char** argv){
 	gameboy* gb = new gameboy; 
 	gb->insert_cart(rom_name);
 	gb->set_debug(dbg);
+
 	sfml_interface interface(dbg, gb->get_gb_type());
-	gb->set_audio_callback_fun(m_audio::play_audio);
-	
+	sfml_audio audio(gb, 2, 32768);
+	audio.play();
+
 	while(interface.is_window_open()){
 		
 		auto start = std::chrono::steady_clock::now();
 
 		gb->run();
-		
+
 		interface.display(gb->get_display_data());
 
 		if(dbg) 
@@ -48,7 +51,7 @@ int main(int argc, char** argv){
 		//else
 			//std::cout << "Not on time\n";
 	}
-	
+	audio.request_stop();
 	delete gb;
 
 }

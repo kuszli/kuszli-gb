@@ -52,23 +52,19 @@ class audio_controller{
 	const uint8_t duty_75[8] = {0, 1, 1, 1, 1, 1, 1, 0};
 	const uint8_t* duties[4] = {duty_12_5, duty_25, duty_50, duty_75};
 		
-	const uint16_t cycles_to_update = 128;
 	uint16_t sampling_freq;
 
 	channel channel1, channel2, channel3, channel4;
 
 	int16_t** audio_buffer_data;
-	int16_t* curr_audio_buffer;
 	int16_t* sample_buffer;
-	int16_t* ready_buff;
+	int16_t* last_buffer;
+	uint32_t ready_buff_pos;
 
 	uint8_t* audio_registers;
-
+	bool buff_ready;
 	uint16_t counter;
-	uint16_t curr_buff_pos;
-	uint16_t sample_counters[4];
-
-	bool buffer_ready;
+	uint32_t curr_buff_pos;
 
 	uint16_t lfsr;
 
@@ -76,21 +72,16 @@ class audio_controller{
 	void update_channel2();
 	void update_channel3();
 	void update_channel4();
-
-	void (*callback_function)(int16_t*);
+	void switch_buffer();
 
 public:
+
 	audio_controller(_memory* mem);
 	~audio_controller();
-
 	void update(const uint8_t cycles);
-	int16_t* get_audio_buffer(){ return audio_buffer_data[0]; }
-	int16_t* second_audio_buffer() { return audio_buffer_data[1]; }
-	int16_t* ready_buffer() { return ready_buff; }
-	bool is_buffer_ready() { return buffer_ready; }
-	void reset_buffer_state() { buffer_ready = false; }
-	void set_callback_function(void (*cf)(int16_t*)){ callback_function = cf; }
-
+	const int16_t* get_buffer();
+	const uint32_t get_buffer_size() { return ready_buff_pos; }
+	const int16_t* busy_buffer() { return const_cast<const int16_t*>(sample_buffer); }
 };
 
 
