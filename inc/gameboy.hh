@@ -36,7 +36,7 @@ class gameboy{
 public:
 	gameboy();
 	~gameboy();
-	_gb_type get_gb_type() { std::cout << gb_type << std::endl; return gb_type; }
+	_gb_type get_gb_type() { return gb_type; }
 	void set_buttons(uint8_t butt){button = butt;}
 	void run();
 	void insert_cart(const std::string& game_name);

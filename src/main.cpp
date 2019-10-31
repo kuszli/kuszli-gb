@@ -13,7 +13,6 @@
 
 int main(int argc, char** argv){
 
-	unsigned char frame_count = 0;
 	int64_t time_elapsed;
 	bool dbg = false;
 	std::string rom_name;

@@ -1,11 +1,11 @@
 #ifndef memoryh
 #define memoryh
 
-#include <cstdint>
-#include <fstream>
-#include <iostream>
-#include <string>
-#include <cmath>
+#include<cstdint>
+#include<fstream>
+#include<iostream>
+#include<string>
+#include<cmath>
 #include "rtc.hh"
 
 enum _mbc_type{
