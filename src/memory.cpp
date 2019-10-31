@@ -20,6 +20,7 @@ _memory::_memory(){
 	external_ram = nullptr;
 	rom_banks = nullptr;
 	rtc_registers = nullptr;
+	_rtc = nullptr;
 	cgb_wram = new uint8_t[0x8000];
 	cgb_vram = new uint8_t[0x2000];
 	bg_palette_ram = new uint8_t[64];
@@ -80,7 +81,7 @@ void _memory::connect_rom(const std::string& rom_name){
 	mode_select = 0;
 
 	rtc_registers = new uint8_t[5];
-
+	_rtc = new rtc(rtc_registers);
 	_rom_name = rom_name;
 
 	rom = new std::fstream(rom_name.c_str(), std::ios::in | std::ios::binary);
@@ -336,7 +337,7 @@ void _memory::write_to_ex_ram(const uint16_t index, const uint8_t value){
 
 	if(ram_enable && ex_ram){
 		if(mbc_type == mbc3 && rtc_register >= 8)
-			rtc_registers[rtc_register - 8] = value;
+			_rtc->write(rtc_register - 8, value);
 
 		else if(mbc_type == mbc2)
 			external_ram[(index - 0xA000) % 0x200] = value & 0xF;
@@ -620,7 +621,7 @@ void _memory::write_to_mbc3(const uint16_t index, const uint8_t value){
 			latch = 1;
 		else if(value == 1){
 			if(latch){
-				//latching function will be there
+				_rtc->latch();
 				latch = 0;
 			}
 		}
@@ -672,7 +673,11 @@ void _memory::save_ram(){
 			throw std::runtime_error("RTC file creating error.");
 
 		rtc.write((char*)rtc_registers, 5);
+		int32_t* last_time_point = new int32_t;
+		*last_time_point = _rtc->get_last_time_point();
+		rtc.write((char*)last_time_point, sizeof(int32_t));
 		rtc.close();
+		delete last_time_point;
 	}
 
 	std::fstream save(save_name.c_str(), std::ios::out | std::ios::binary);
@@ -706,11 +711,15 @@ void _memory::load_ram(){
 		unsigned int length = rtc.tellg();
 		rtc.seekg(0, rtc.beg);
 
-		if(length != 5)
+		if(length != 9)
 			return;
 
 		rtc.read((char*)rtc_registers, 5);
+		int32_t* last_time_point = new int32_t;
+		rtc.read((char*)last_time_point, sizeof(int32_t));
+		_rtc->load_last_time_point(*last_time_point);
 		rtc.close();
+		delete last_time_point;
 	}
 
 	std::fstream save(save_name.c_str(), std::ios::in | std::ios::binary);
