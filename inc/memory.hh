@@ -1,11 +1,12 @@
 #ifndef memoryh
 #define memoryh
 
-#include<cstdint>
-#include<fstream>
-#include<iostream>
-#include<string>
-#include<cmath>
+#include <cstdint>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <cmath>
+#include "rtc.hh"
 
 enum _mbc_type{
 	none,
@@ -35,6 +36,7 @@ class _memory{
 	uint8_t vram_bank;
 	uint8_t* bg_palette_ram;
 	uint8_t* ob_palette_ram;
+	rtc* _rtc;
 
 	std::fstream* rom;
 
