@@ -13,7 +13,7 @@
 class rtc{
 
 	int32_t last_time_point;
-	uint8_t*	rtc_registers;
+	uint8_t* rtc_registers;
 
 	int32_t current_time();
 	void inc_mins(uint32_t mins);
