@@ -12,17 +12,7 @@ audio_controller::audio_controller(_memory* mem){
 	channel3.trigg = &mem->chan3_trigg;
 	channel4.trigg = &mem->chan4_trigg;
 
-	audio_buffer_data = new int16_t*[2];
-	audio_buffer_data[0] = new int16_t[8192];
-	audio_buffer_data[1] = new int16_t[8192];
-
-
-//	std::memset(audio_buffer_data[0], 0, 8192 * sizeof(int16_t));
-//	std::memset(audio_buffer_data[1], 0, 8192 * sizeof(int16_t));
-
-
-	sample_buffer = audio_buffer_data[0];
-	last_buffer = audio_buffer_data[1];
+	sample_buffer = new int16_t[16830];
 	sampling_freq = 32768;
 	curr_buff_pos = 0;
 	ready_buff_pos = 0;
@@ -32,8 +22,8 @@ audio_controller::audio_controller(_memory* mem){
 }
  
 audio_controller::~audio_controller(){
-	delete[] audio_buffer_data;
-	audio_buffer_data = nullptr;
+	delete[] sample_buffer;
+	sample_buffer = nullptr;
 
 }
 
@@ -84,44 +74,45 @@ void audio_controller::update(const uint8_t cycles){
 
 		sample_buffer[curr_buff_pos++] = 64 *
 		(channel1.amplitude * ch1_right_enable + channel2.amplitude * ch2_right_enable + channel3.amplitude * ch3_right_enable + channel4.amplitude * ch4_right_enable) * right_vol;
-		
-		if(curr_buff_pos == 4096)
-			switch_buffer();
+
+		if(curr_buff_pos == 16380)
+			curr_buff_pos = 0;
 		
 	}
 
 }
 
-void audio_controller::switch_buffer(){
-	
-	ready_buff_pos = curr_buff_pos;
-	curr_buff_pos = 0;
-
-	if(sample_buffer == audio_buffer_data[0])
-		sample_buffer = audio_buffer_data[1];
-
-	else
-		sample_buffer = audio_buffer_data[0];
-	
-	
-}
 
 
 const int16_t* audio_controller::get_buffer(){ 
 
-	if(last_buffer != sample_buffer)
-		return nullptr;
+	int16_t left_limit = curr_buff_pos - 1638;
+	int16_t right_limit = curr_buff_pos + 1638;
 	
+	if(left_limit < 0)
+		left_limit = 16380 + left_limit;
+	if(right_limit > 16380)
+		right_limit -= 16380;
 
-	if(sample_buffer == audio_buffer_data[0]){
-		last_buffer = audio_buffer_data[1];
-		return const_cast<const int16_t*>(audio_buffer_data[1]);
+	if(right_limit < left_limit){
+		if(ready_buff_pos > left_limit || ready_buff_pos < right_limit)
+			return nullptr;
 	}
 
-	else{
-		last_buffer = audio_buffer_data[0];	
-		return const_cast<const int16_t*>(audio_buffer_data[0]);
+
+	else{ 
+		if(ready_buff_pos > left_limit && ready_buff_pos < right_limit)
+			return nullptr;
 	}
+
+
+	const int16_t* buff = const_cast<const int16_t*>(&sample_buffer[ready_buff_pos]);
+	ready_buff_pos += 1638;
+	if(ready_buff_pos >= 16380)
+		ready_buff_pos = 0;
+
+	return buff;
+
 }
 
 void audio_controller::update_channel1(){

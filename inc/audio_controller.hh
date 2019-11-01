@@ -56,9 +56,8 @@ class audio_controller{
 
 	channel channel1, channel2, channel3, channel4;
 
-	int16_t** audio_buffer_data;
+
 	int16_t* sample_buffer;
-	int16_t* last_buffer;
 	uint32_t ready_buff_pos;
 
 	uint8_t* audio_registers;
@@ -72,7 +71,7 @@ class audio_controller{
 	void update_channel2();
 	void update_channel3();
 	void update_channel4();
-	void switch_buffer();
+
 
 public:
 
