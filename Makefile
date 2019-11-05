@@ -1,4 +1,4 @@
-CXXFLAGS = -fPIC -c -std=c++11 -O2
+CXXFLAGS = -fPIC -c -std=c++11 -O2 
 LIBS = -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 OBJ = obj
 SRC = src
@@ -8,12 +8,15 @@ OBJS = $(OBJ)/main.o $(OBJ)/gameboy.o $(OBJ)/cpu.o $(OBJ)/interrupts.o $(OBJ)/lc
 
 LIB_OBJS = $(OBJ)/gameboy.o $(OBJ)/cpu.o $(OBJ)/interrupts.o $(OBJ)/lcd_driver.o $(OBJ)/timer.o $(OBJ)/memory.o $(OBJ)/joypad.o $(OBJ)/dma.o $(OBJ)/audio_controller.o $(OBJ)/wav_header.o $(OBJ)/serial.o $(OBJ)/rtc.o
 
+LIB_AUDIO = $(OBJ)/sfml_audio.o
+
 kuszli-gb: $(OBJS)
 	g++ $(OBJS) $(LIBS) -o kuszli-gb
 
-install: $(LIB_OBJS)
+install: $(LIB_OBJS) $(LIB_AUDIO)
 	mkdir -p  /usr/local/lib/kuszli-gb
 	g++ -shared $(LIB_OBJS) -o /usr/local/lib/kuszli-gb/libkuszli-gb.so
+	g++ -shared $(LIB_AUDIO) -o /usr/local/lib/kuszli-gb/libkuszli-gb-audio.so
 	mkdir -p /usr/local/include/kuszli-gb
 	cp inc/*.hh /usr/local/include/kuszli-gb && cp inc/*.h /usr/local/include/kuszli-gb
 
