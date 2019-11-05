@@ -24,7 +24,7 @@ int main(int argc, char** argv){
 	gb->set_debug(dbg);
 
 	sfml_interface interface(dbg, gb->get_gb_type());
-	sfml_audio audio(gb, 2, 32768);
+	sfml_audio audio(gb, 2, 44100);//32768);
 	audio.play();
 
 	while(interface.is_window_open()){

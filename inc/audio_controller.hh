@@ -59,13 +59,13 @@ class audio_controller{
 
 	int16_t* sample_buffer;
 	uint32_t ready_buff_pos;
-
-	uint8_t* audio_registers;
-	bool buff_ready;
-	uint16_t counter;
+	uint16_t buff_size;
 	uint32_t curr_buff_pos;
 
 	uint16_t lfsr;
+
+	uint16_t counter;
+	uint8_t* audio_registers;
 
 	void update_channel1();
 	void update_channel2();
@@ -78,6 +78,7 @@ public:
 	audio_controller(_memory* mem);
 	~audio_controller();
 	void update(const uint8_t cycles);
+	void set_sampling_freq(uint16_t freq){ sampling_freq = freq; }
 	const int16_t* get_buffer();
 	const uint32_t get_buffer_size() { return ready_buff_pos; }
 	const int16_t* busy_buffer() { return const_cast<const int16_t*>(sample_buffer); }

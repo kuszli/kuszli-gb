@@ -19,7 +19,7 @@ bool sfml_audio::onGetData(Chunk& data){
 			return false;
 	}
 //	data.samples = gb->get_audio_buffer();
-	data.sampleCount = 1638;
+	data.sampleCount = 2204;//1638;
 
 	return true;
 }
