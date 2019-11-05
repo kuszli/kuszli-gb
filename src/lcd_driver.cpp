@@ -408,16 +408,22 @@ void lcd_driver::draw_line(){
 			oam_idx = visible_sprites->top();
 			oam_x = oam[oam_idx*4+1];
 
-			while(oam_x < 8 && !visible_sprites->empty()){ //draw sprites partially hidden
+			while(oam_x < 8){ //draw sprites partially hidden
 				fill_fifo_oam(oam_idx, 8 - oam_x);
+				if(visible_sprites->empty())
+					break;
 				oam_idx = visible_sprites->top();
 				oam_x = oam[oam_idx*4+1];
+				
 			}
 
-			while(curr_px == oam_x - 8 && !visible_sprites->empty() ){ //draw entire sprites
+			while(curr_px == oam_x - 8){ //draw entire sprites
 				fill_fifo_oam(oam_idx);
+				if(visible_sprites->empty())
+					break;
 				oam_idx = visible_sprites->top();
 				oam_x = oam[oam_idx*4+1];
+
 			}			
 		}
 
