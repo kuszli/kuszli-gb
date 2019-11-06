@@ -123,8 +123,8 @@ public:
 	void update(const uint8_t cycles);
 	uint8_t debug(){ return lcd_registers[LY]; }
 	void set_oam_viewer(bool opt){ dbg = opt; }
-	uint8_t* const screen(){ return screen_buffer; }
-	uint8_t** const oam_screen(){ return oam_debug_buffer; }
+	const uint8_t* const screen(){ return const_cast<const uint8_t*>(screen_buffer); }
+	const uint8_t* const* const oam_screen(){ return const_cast<const uint8_t* const*>(oam_debug_buffer); }
 
 };
 

@@ -90,7 +90,7 @@ sfml_interface::~sfml_interface(){
 }
 
 
-void sfml_interface::display(uint8_t* pixels){
+void sfml_interface::display(const uint8_t* pixels){
 
 	texture.update(pixels);
 	window.draw(sprite, &shader);
@@ -99,7 +99,7 @@ void sfml_interface::display(uint8_t* pixels){
 }
 
 
-void sfml_interface::show_oam(uint8_t** oam_pixels){
+void sfml_interface::show_oam(const uint8_t* const* oam_pixels){
 
 	if(!oam_dbg)
 		return;

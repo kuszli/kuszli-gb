@@ -38,8 +38,8 @@ public:
 	sfml_interface(bool dbg, _gb_type gbt);
 	~sfml_interface();
 	uint8_t get_key() const { return key; }
-	void display(uint8_t* pixels);
-	void show_oam(uint8_t** oam_pixels);
+	void display(const uint8_t* pixels);
+	void show_oam(const uint8_t* const* oam_pixels);
 	void check_events();
 	bool is_window_open() const { return window.isOpen(); }
 
