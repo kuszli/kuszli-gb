@@ -49,6 +49,7 @@ sfml_interface::sfml_interface(gameboy* g){
    palette.update(pal);
 
 	gb = g;
+	emulation_speed = 1;
 
 	if(gb->get_gb_type() == dmg){
 		if(!shader.loadFromMemory(fragment_dmg, sf::Shader::Fragment)){
@@ -111,7 +112,7 @@ void sfml_interface::event_loop(){
 
 		auto end = std::chrono::steady_clock::now();
 
-		time_elapsed = VBLANK_IN_MICROSECONDS - std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+		time_elapsed = VBLANK_IN_MICROSECONDS/emulation_speed - std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
 		if( time_elapsed > 0)
 			sf::sleep(sf::microseconds(time_elapsed));
 
@@ -214,7 +215,11 @@ void sfml_interface::process_options(uint8_t opt){
 		}
 
 		case TOGGLE_SPEED:{
-		break;
+			emulation_speed *= 2;
+			if(emulation_speed == 16)
+				emulation_speed = 1;
+			std::cout << "Emulation speed: " << (int)emulation_speed << "x\n";
+			break;
 		}
 
 		case SCREEN_SIZE:{
@@ -224,6 +229,7 @@ void sfml_interface::process_options(uint8_t opt){
 				screen_size.y = 144;
 			}
 			window.setSize(screen_size);
+			std::cout << "Screen size: " << screen_size.x << " x " << screen_size.y << "\n";
 			break;
 		}
 

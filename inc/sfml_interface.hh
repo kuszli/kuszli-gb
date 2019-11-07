@@ -43,6 +43,7 @@ class sfml_interface{
 
 	uint8_t key, func_key;
 	int64_t time_elapsed;
+	uint8_t emulation_speed;
 	bool oam_dbg;
 
 	void check_key(uint8_t &key);
