@@ -42,6 +42,7 @@ class sfml_interface{
 	std::vector<sf::Keyboard::Key> function_buttons;
 
 	uint8_t key, func_key;
+	int64_t time_elapsed;
 	bool oam_dbg;
 
 	void check_key(uint8_t &key);
@@ -53,11 +54,12 @@ public:
 
 	sfml_interface(gameboy* g);
 	//~sfml_interface();
+	void event_loop();
 	uint8_t get_key() const { return key; }
 	void display(const uint8_t* pixels);
 	void show_oam(const uint8_t* oam_pixels);
 	void check_events();
-	bool is_window_open() const { return window.isOpen(); }
+	//bool is_window_open() const { return window.isOpen(); }
 
 };
 

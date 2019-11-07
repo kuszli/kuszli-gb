@@ -1,5 +1,8 @@
 #include "sfml_interface.hh"
 #include <iostream>
+#include <chrono>
+
+#define VBLANK_IN_MICROSECONDS 16743
 
 const char* fragment_dmg = R"glsl(
         #version 130
@@ -90,15 +93,39 @@ void sfml_interface::prepare_buttons(){
 
 }
 
+void sfml_interface::event_loop(){
+
+
+	while(window.isOpen()){
+		auto start = std::chrono::steady_clock::now();
+
+		gb->run();
+
+		display(gb->get_display_data());
+
+		if(oam_dbg)
+			show_oam(gb->oam_debug());
+
+		check_events();
+		gb->set_buttons(get_key());
+
+		auto end = std::chrono::steady_clock::now();
+
+		time_elapsed = VBLANK_IN_MICROSECONDS - std::chrono::duration_cast<std::chrono::microseconds>(end-start).count();
+		if( time_elapsed > 0)
+			sf::sleep(sf::microseconds(time_elapsed));
+
+	}
+
+
+}
+
 
 void sfml_interface::display(const uint8_t* pixels){
 
 	texture.update(pixels);
 	window.draw(sprite, &shader);
 	window.display();
-	if(oam_dbg)
-		show_oam(gb->oam_debug());
-
 
 }
 
