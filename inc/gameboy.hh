@@ -42,9 +42,8 @@ public:
 	void insert_cart(const std::string& game_name);
 	void pull_out_cart();
 	void reset() {_cpu->reset();}
-	void set_debug(bool opt){_lcd_driver->set_oam_viewer(opt);}
 	const uint8_t* get_display_data() const {return _lcd_driver->screen();}
-	const uint8_t* const* oam_debug() const {return _lcd_driver->oam_screen();}
+	const uint8_t* oam_debug() const {return _lcd_driver->oam_screen();}
 	const int16_t* get_audio_buffer() { return _audio_controller->get_buffer(); }
 	const int16_t* get_busy_audio_buffer() { return _audio_controller->busy_buffer(); }	
 	const uint32_t get_audio_buffer_size() { return _audio_controller->get_buffer_size(); }

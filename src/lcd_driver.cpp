@@ -40,15 +40,11 @@ lcd_driver::lcd_driver(_memory* mem){
 	LY_counter = 0;
 	old_stat_signal = 0;
 	oam_search_done = false;
-	dbg = false;
 
 	screen_buffer = new uint8_t[160*144*4];
 
-	oam_debug_buffer = new uint8_t*[128];
+	oam_debug_buffer = new uint8_t[128*40*4];
 
-	for(int i = 0; i < 128; ++i){
-		oam_debug_buffer[i] = new uint8_t[40];
-	}
 }
 
 
@@ -436,27 +432,39 @@ void lcd_driver::draw_line(){
 
 void lcd_driver::debug_draw_oam(){ 
 
-	if(lcd_registers[LY] >= 128)
-		return;
-
+	uint8_t i,j,k;
 	uint8_t sprite_size = lcd_registers[LCDC] & 1 << 2 ? 16 : 8;
-	uint8_t base = (lcd_registers[LY] / 16) * 5;
-	uint8_t block = (lcd_registers[LY] / 8) % 2 == 0 ? 0 : 1;
-		
 	uint8_t* curr_pal;
 	uint8_t* tile;
 	uint8_t color;
+	uint16_t rgb;
+	for(i = 0; i < 128; ++i){
 
-	for(uint8_t i = 0; i < 5; ++i){
-		curr_pal = oam[(base + i)*4 + 3]  & 1 << 4 ? &lcd_registers[OBP1] : &lcd_registers[OBP0];
-		if(block == 1 && sprite_size == 8)
-			tile = blank_tile;
-		else
-			tile = &vram1[0][ (oam[(base + i)*4 + 2] + block) * 16 + (lcd_registers[LY]%8)*2];
+		uint8_t base = (i / 16) * 5;
+		uint8_t block = (i / 8) % 2 == 0 ? 0 : 1;
+		
+		for(j = 0; j < 5; ++j){
+			if(gb_type == dmg)
+				curr_pal = oam[(base + j)*4 + 3]  & 1 << 4 ? &lcd_registers[OBP1] : &lcd_registers[OBP0];
+			else
+				curr_pal =  &cgb_ob_pal[8 * (oam[(base+j)*4 + 3] & 0x7)];
 
-		for(uint8_t j = 0; j < 8; ++j){
-			color = get_palette_index(tile, j);
-			oam_debug_buffer[lcd_registers[LY]][i*8 + j] = get_pixel_mono(curr_pal, color);
+			if(block == 1 && sprite_size == 8)
+				tile = blank_tile;
+			else
+				tile = &vram1[(oam[(base+j)*4 + 3] & 1 << 3)>>3][ (oam[(base + j)*4 + 2] + block) * 16 + (i % 8)*2];
+
+			for(uint8_t k = 0; k < 8; ++k){
+				color = get_palette_index(tile, k);
+				if(gb_type == dmg)
+					oam_debug_buffer[(i*40 + j*8 + k)*4] = get_pixel_mono(curr_pal, color);
+				else{
+					rgb = get_pixel_rgb(curr_pal, color);
+					oam_debug_buffer[(i*40 + j*8 + k)*4] = rgb & 0x1F;
+					oam_debug_buffer[(i*40 + j*8 + k)*4 + 1] = (rgb & 0x3E0) >> 5;
+					oam_debug_buffer[(i*40 + j*8 + k)*4 + 2] = (rgb & 0x7C00) >> 10;
+				}
+			}
 		}
 	}
 
@@ -522,8 +530,6 @@ void lcd_driver::switch_mode(){
 			oam_search_done = false;
 			mode = 1; //draw pixels
 			draw_line();
-			if(dbg)
-				debug_draw_oam();
 			break;
 		}
 

@@ -21,9 +21,8 @@ int main(int argc, char** argv){
 
 	gameboy* gb = new gameboy; 
 	gb->insert_cart(rom_name);
-	gb->set_debug(dbg);
 
-	sfml_interface interface(dbg, gb->get_gb_type());
+	sfml_interface interface(gb);
 	sfml_audio audio(gb, 2, 32768);
 	audio.play();
 
@@ -34,9 +33,6 @@ int main(int argc, char** argv){
 		gb->run();
 
 		interface.display(gb->get_display_data());
-
-		if(dbg) 
-			interface.show_oam(gb->oam_debug());
 
 		interface.check_events();
 		gb->set_buttons(interface.get_key());

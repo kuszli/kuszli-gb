@@ -71,7 +71,7 @@ class lcd_driver{
 	uint8_t* screen_buffer;
 	uint8_t* cgb_bg_pal;
 	uint8_t* cgb_ob_pal;
-	uint8_t** oam_debug_buffer;
+	uint8_t* oam_debug_buffer;
 	std::vector<uint8_t>* sprites_cont;
 	std::priority_queue<uint8_t, std::vector<uint8_t>, compare>* visible_sprites;
 	std::deque<pixel>* pixel_fifo;
@@ -83,7 +83,6 @@ class lcd_driver{
 	uint8_t interrupt_selection_flags[4] = {(1 << 5), 0, (1 << 3), (1 << 4)};
 	uint8_t blank_tile[16] = {0};
 
-	bool dbg;
 	bool oam_search_done;
 	uint8_t mode;
 	uint8_t cycles_to_add;
@@ -121,10 +120,10 @@ public:
 	~lcd_driver();
 	void set_gb_type(_gb_type t) { gb_type = t; }
 	void update(const uint8_t cycles);
-	uint8_t debug(){ return lcd_registers[LY]; }
-	void set_oam_viewer(bool opt){ dbg = opt; }
+//	uint8_t debug(){ return lcd_registers[LY]; }
+//	void set_oam_viewer(bool opt){ dbg = opt; }
 	const uint8_t* const screen(){ return const_cast<const uint8_t*>(screen_buffer); }
-	const uint8_t* const* const oam_screen(){ return const_cast<const uint8_t* const*>(oam_debug_buffer); }
+	const uint8_t* const oam_screen(){ debug_draw_oam(); return const_cast<const uint8_t*>(oam_debug_buffer); }
 
 };
 
