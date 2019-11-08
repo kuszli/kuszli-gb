@@ -1,7 +1,7 @@
 
 #include"cpu.hh"
 #include "opcodes_init_list.h"
-
+#include <fstream>
 
 cpu::cpu(_memory* mem){
 
@@ -101,7 +101,32 @@ void cpu::reset(){
 
 }
 	
-	
+
+void cpu::save_state(std::fstream* file){
+
+	uint8_t regs8[] = {A, F, B, C, D, E, H, L};
+	uint16_t regs16[] = {SP, PC};
+	uint8_t flags[] = {(uint8_t)IME, (uint8_t)EI_scheduled, (uint8_t)_state, cpu_speed};
+
+	file->write((char*)regs8, 8);
+	file->write((char*)regs16, 4);
+	file->write((char*)flags, 4);
+
+
+}	
+
+void cpu::load_state(std::fstream* file){
+
+#define f(x) file->read((char*)&x, 1)
+	f(A); f(F); f(B); f(C); f(D); f(E); f(H); f(L);
+
+	file->read((char*)&SP, sizeof(SP));
+	file->read((char*)&PC, sizeof(PC));
+
+	f(IME); f(EI_scheduled); f(_state); f(cpu_speed);
+
+}
+
 //*********generic cpu::instructions*********************************************
 
 uint8_t cpu::NOP(){ return 4; }

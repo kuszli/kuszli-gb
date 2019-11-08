@@ -1,6 +1,5 @@
 #include "gameboy.hh"
-
-
+#include <fstream>
 
 gameboy::gameboy(): button(0), cycles(0), cycles_count(0), gb_type(dmg)
 {
@@ -44,6 +43,7 @@ void gameboy::insert_cart(const std::string &game_name){
 	memory->connect_rom(game_name);
 	gb_type = memory->get_gb_type();
 	_lcd_driver->set_gb_type(gb_type);
+	rom_name = game_name;
 
 }
 
@@ -84,7 +84,42 @@ void gameboy::pull_out_cart(){
 	memory->disconnect_rom();
 }
 	
-		
 	
+void gameboy::save_state(){
+
+	std::string save_state_name;
+	std::size_t dot = rom_name.find_last_of('.');
+
+	save_state_name = rom_name.substr(0, dot);
+	save_state_name += ".ss";
+
+	std::fstream* save_state_file = new std::fstream(save_state_name.c_str(), std::ios::out | std::ios::binary);
+	if(!save_state_file->is_open()){
+		throw std::runtime_error("Save state file creating error.");
+	}
+	_cpu->save_state(save_state_file);
+	memory->save_state(save_state_file);
+	save_state_file->close();
 	
+
+}	
+	
+void gameboy::load_state(){
+
+	std::string save_state_name;
+	std::size_t dot = rom_name.find_last_of('.');
+
+	save_state_name = rom_name.substr(0, dot);
+	save_state_name += ".ss";
+
+	std::fstream* save_state_file = new std::fstream(save_state_name.c_str(), std::ios::in | std::ios::binary);
+	if(!save_state_file->is_open())
+		return;
+	
+	_cpu->load_state(save_state_file);
+	memory->load_state(save_state_file);
+	save_state_file->close();
+
+
+}
 

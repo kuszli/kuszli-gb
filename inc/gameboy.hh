@@ -21,6 +21,7 @@ class gameboy{
 	uint8_t button;
 	uint32_t cycles_count;
 
+	std::string rom_name;
 	_gb_type gb_type;
 	_memory* memory;
 	cpu* _cpu;
@@ -34,6 +35,7 @@ class gameboy{
 
 
 public:
+
 	gameboy();
 	~gameboy();
 	_gb_type get_gb_type() { return gb_type; }
@@ -42,6 +44,8 @@ public:
 	void insert_cart(const std::string& game_name);
 	void pull_out_cart();
 	void reset() {_cpu->reset();}
+	void save_state();
+	void load_state();
 	const uint8_t* get_display_data() const {return _lcd_driver->screen();}
 	const uint8_t* oam_debug() const {return _lcd_driver->oam_screen();}
 	const int16_t* get_audio_buffer() { return _audio_controller->get_buffer(); }

@@ -4,18 +4,18 @@
 _memory::_memory(){
 
 	memory = new uint8_t[65536];
-	wram_bank = vram_bank = 0;
+	wram_bank = vram_bank = 0; //
 	rom_connected = false;
 	dummy = 0xFF;
-	dma_time = false;
-	dma_request = false;
-	hblank_dma_time = false;
-	hdma_request = false;
-	hdma_transfer = false;
-	gdma_transfer = 0;
-	hdma_src_trigger = false;
-	hdma_dest_trigger = false;
-	serial_trigg = false;
+	dma_time = false; //
+	dma_request = false; //
+	hblank_dma_time = false; //
+	hdma_request = false; //
+//	hdma_transfer = false;
+//	gdma_transfer = 0;
+	hdma_src_trigger = false; //
+	hdma_dest_trigger = false; //
+	serial_trigg = false; //
 	rom = nullptr;
 	external_ram = nullptr;
 	rom_banks = nullptr;
@@ -27,10 +27,10 @@ _memory::_memory(){
 	ob_palette_ram = new uint8_t[64];
 	ram_enable = false;
 	ex_ram = false;
-	chan1_trigg = false;
-	chan2_trigg = false;
-	chan3_trigg = false;
-	chan4_trigg = false;
+	chan1_trigg = false; //
+	chan2_trigg = false; //
+	chan3_trigg = false; //
+	chan4_trigg = false; //
 	mbc_type = none;
 	gb_type = dmg;
 }
@@ -73,12 +73,12 @@ _memory::~_memory(){
 
 void _memory::connect_rom(const std::string& rom_name){
 
-	bank_select1 = 1;
-	bank_select2 = 0;
-	bank_select3 = 0;
+	bank_select1 = 1; //
+	bank_select2 = 0; //
+	bank_select3 = 0; //
 
 
-	mode_select = 0;
+	mode_select = 0; //
 
 	rtc_registers = new uint8_t[5];
 	_rtc = new rtc(rtc_registers);
@@ -737,6 +737,45 @@ void _memory::load_ram(){
 	save.close();
 }
 
+void _memory::save_state(std::fstream* file){
 
+	file->write((char*)&memory[0x8000], 0x8000);
+	if(ex_ram)
+		file->write((char*)external_ram, ram_size);
+	if(gb_type != dmg){
+		file->write((char*)cgb_wram, 0x8000);
+		file->write((char*)cgb_vram, 0x2000);
+		file->write((char*)bg_palette_ram, 64);
+		file->write((char*)ob_palette_ram, 64);
+	}
+
+	uint8_t values[] = {latch, mode_select, bank_select1, bank_select2, bank_select3, rtc_register};
+	bool flags[] = {ram_enable, dma_request, hdma_request, dma_time, hblank_dma_time, hdma_src_trigger, 
+							hdma_dest_trigger, serial_trigg, chan1_trigg, chan2_trigg, chan3_trigg, chan4_trigg};
+	file->write((char*)values, sizeof(values));
+	file->write((char*)flags, sizeof(flags));
+
+
+}
+
+void _memory::load_state(std::fstream* file){
+
+	file->read((char*)&memory[0x8000], 0x8000);
+	if(ex_ram)
+		file->read((char*)external_ram, ram_size);
+	if(gb_type != dmg){
+		file->read((char*)cgb_wram, 0x8000);
+		file->read((char*)cgb_vram, 0x2000);
+		file->read((char*)bg_palette_ram, 64);
+		file->read((char*)ob_palette_ram, 64);
+	}
+
+#define f(x) file->read((char*)&x, 1)
+	f(latch); f(mode_select); f(bank_select1); f(bank_select2), f(bank_select3), f(rtc_register);
+
+	f(ram_enable); f(dma_request); f(hdma_request); f(dma_time); f(hblank_dma_time); f(hdma_src_trigger);
+	f(hdma_dest_trigger); f(serial_trigg); f(chan1_trigg); f(chan2_trigg); f(chan3_trigg); f(chan4_trigg);
+
+}
 
 

@@ -7,7 +7,7 @@ dma::dma(_memory* mem){
 	counter = 0;
 	hdma_transfer = false;
 	transfer_size = 0;
-	hdma_counter = 0;
+//	hdma_counter = 0;
 
 }
 

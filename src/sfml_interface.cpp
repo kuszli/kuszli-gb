@@ -207,11 +207,13 @@ void sfml_interface::process_options(uint8_t opt){
 	switch(opt){
 
 		case LOAD_STATE:{
-		break;
+			gb->load_state();
+			break;
 		}
 
 		case SAVE_STATE:{
-		break;
+			gb->save_state();
+			break;
 		}
 
 		case TOGGLE_SPEED:{

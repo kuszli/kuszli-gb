@@ -32,8 +32,6 @@ struct channel{
 	uint8_t prescaler;
 	bool* trigg;
 	bool len_enable;
-	float wave_timer;
-	float wave_step;
 	bool enable;
 	
 	channel(): volume(0), real_freq(1024), freq_counter(0), envelope_counter(0), enable(false){}
@@ -51,10 +49,6 @@ class audio_controller{
 	const uint8_t duty_50[8] = {1, 0, 0, 0, 0, 1, 1, 1};
 	const uint8_t duty_75[8] = {0, 1, 1, 1, 1, 1, 1, 0};
 	const uint8_t* duties[4] = {duty_12_5, duty_25, duty_50, duty_75};
-		
-	uint16_t sampling_freq;
-
-	channel channel1, channel2, channel3, channel4;
 
 	int16_t** audio_buffer_data;
 	int16_t* sample_buffer;
@@ -62,7 +56,12 @@ class audio_controller{
 	uint32_t ready_buff_pos;
 
 	uint8_t* audio_registers;
-	bool buff_ready;
+
+	uint16_t sampling_freq;
+
+	channel channel1, channel2, channel3, channel4;
+
+//	bool buff_ready;
 	uint16_t counter;
 	uint32_t curr_buff_pos;
 
