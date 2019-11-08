@@ -115,6 +115,17 @@ void gameboy::load_state(){
 	std::fstream* save_state_file = new std::fstream(save_state_name.c_str(), std::ios::in | std::ios::binary);
 	if(!save_state_file->is_open())
 		return;
+
+	save_state_file->seekg(0, save_state_file->end);
+	unsigned int length = save_state_file->tellg();
+	save_state_file->seekg(0, save_state_file->beg);
+
+	unsigned int predicted_size = 16 + memory->save_state_size();
+
+	if(length != predicted_size){
+		save_state_file->close();
+		return;
+	}
 	
 	_cpu->load_state(save_state_file);
 	memory->load_state(save_state_file);

@@ -711,8 +711,10 @@ void _memory::load_ram(){
 		unsigned int length = rtc.tellg();
 		rtc.seekg(0, rtc.beg);
 
-		if(length != 9)
+		if(length != 9){
+			rtc.close();
 			return;
+		}
 
 		rtc.read((char*)rtc_registers, 5);
 		int32_t* last_time_point = new int32_t;
@@ -730,8 +732,10 @@ void _memory::load_ram(){
 	unsigned int length = save.tellg();
 	save.seekg(0, save.beg);
 
-	if(length != ram_size)
+	if(length != ram_size){
+		save.close();
 		return;
+	}
 
 	save.read((char*)external_ram, ram_size);
 	save.close();
@@ -775,6 +779,22 @@ void _memory::load_state(std::fstream* file){
 
 	f(ram_enable); f(dma_request); f(hdma_request); f(dma_time); f(hblank_dma_time); f(hdma_src_trigger);
 	f(hdma_dest_trigger); f(serial_trigg); f(chan1_trigg); f(chan2_trigg); f(chan3_trigg); f(chan4_trigg);
+
+}
+
+uint32_t _memory::save_state_size(){
+
+	uint32_t size = 0x8000;
+
+	if(ex_ram)
+		size += ram_size;
+	if(gb_type != dmg)
+		size += 0x8000 + 0x2000 + 64 + 64; 
+
+	size += 18; //flags and variables
+
+	return size;
+	
 
 }
 

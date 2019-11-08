@@ -105,6 +105,7 @@ public:
 	uint8_t* ob_palette_mem() { return ob_palette_ram; }
 	void save_state(std::fstream* file);
 	void load_state(std::fstream* file);
+	uint32_t save_state_size();
 
 };
 
