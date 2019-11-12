@@ -111,6 +111,8 @@ class lcd_driver{
 	void search_oam();
  	void fill_fifo_bgwin(const uint8_t* const* bg_map, const uint8_t* const* bg_data, uint16_t block, const bool windowing);
 	void fill_fifo_oam(const uint8_t oam_idx, const uint8_t shift);
+	void save_fifo(std::vector<pixel> &vec);
+	void restore_fifo(std::vector<pixel> &vec);
 	void update_sprite(const uint8_t oam_idx);
 	void update_mode();
 	void debug_draw_oam();

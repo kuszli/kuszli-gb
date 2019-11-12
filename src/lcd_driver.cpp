@@ -405,11 +405,14 @@ void lcd_driver::draw_line(){
 		if(!windowing){ 
 			if(lcd_registers[LCDC] & 1 << 5){ //window enable
 				if((curr_px >= lcd_registers[WX] - 7) && (lcd_registers[WY] <= lcd_registers[LY])){ //window coordinates
+					std::vector<pixel> backup;
+					save_fifo(backup);
 					pixel_fifo->clear(); //prepare place for window tiles
 					curr_nums = window_tile_nums; //switch to window tiles
 					block = ((lcd_registers[LY] - lcd_registers[WY])/8) * 32; //calculate block
 					windowing = true;
 					fill_fifo_bgwin(curr_nums, bg_tile_data, block, windowing);
+					restore_fifo(backup);
 				}
 			}
 		}
@@ -443,6 +446,29 @@ void lcd_driver::draw_line(){
 	}
 }
 		
+
+void lcd_driver::save_fifo(std::vector<pixel> &vec){
+
+	for(pixel& px : *pixel_fifo){	
+		vec.push_back(px);
+	}
+
+}
+
+
+void lcd_driver::restore_fifo(std::vector<pixel> &vec){
+
+	uint8_t i = 0;
+	for(pixel& px : vec){	
+		if(px.type == obj){
+			if(!pixel_fifo->at(i).priority_over_obj)
+				pixel_fifo->at(i) = px;
+		}
+		++i;	
+	}
+
+}
+
 
 void lcd_driver::debug_draw_oam(){ 
 
