@@ -72,6 +72,8 @@ class lcd_driver{
 	uint8_t* cgb_bg_pal;
 	uint8_t* cgb_ob_pal;
 	uint8_t* oam_debug_buffer;
+	uint8_t* bg_map_buffer;
+
 	std::vector<uint8_t>* sprites_cont;
 	std::priority_queue<uint8_t, std::vector<uint8_t>, compare>* visible_sprites;
 	std::deque<pixel>* pixel_fifo;
@@ -112,6 +114,7 @@ class lcd_driver{
 	void update_sprite(const uint8_t oam_idx);
 	void update_mode();
 	void debug_draw_oam();
+	void draw_bg_map();
 
 
 public:
@@ -124,6 +127,7 @@ public:
 //	void set_oam_viewer(bool opt){ dbg = opt; }
 	const uint8_t* const screen(){ return const_cast<const uint8_t*>(screen_buffer); }
 	const uint8_t* const oam_screen(){ debug_draw_oam(); return const_cast<const uint8_t*>(oam_debug_buffer); }
+	const uint8_t* const bg_map_screen(){ draw_bg_map(); return const_cast<const uint8_t*>(bg_map_buffer); }
 
 };
 

@@ -45,6 +45,8 @@ lcd_driver::lcd_driver(_memory* mem){
 
 	oam_debug_buffer = new uint8_t[128*40*4];
 
+	bg_map_buffer = new uint8_t[256*256*4];
+
 }
 
 
@@ -55,6 +57,9 @@ lcd_driver::~lcd_driver(){
 
 	delete[] oam_debug_buffer;
 	oam_debug_buffer = nullptr;
+
+	delete[] bg_map_buffer;
+	bg_map_buffer = nullptr;
 
 	delete sprites_cont;
 	sprites_cont = nullptr;
@@ -101,6 +106,8 @@ void lcd_driver::update_sprite(const uint8_t oam_idx){
 	}
 	else
 		sprite.tile = oam[oam_idx*4 + 2];
+
+
 
 	if(gb_type == dmg){
 		sprite.palette = oam[oam_idx*4 + 3] & 1 << 4 ? &lcd_registers[OBP1] : &lcd_registers[OBP0];
@@ -272,6 +279,8 @@ void lcd_driver::fill_fifo_oam(const uint8_t oam_idx, const uint8_t shift = 0){
 
 	else{
 
+
+
 		for(uint8_t i = shift; i < 8; ++i){
 
 			if(sprite.h_flip)
@@ -285,14 +294,19 @@ void lcd_driver::fill_fifo_oam(const uint8_t oam_idx, const uint8_t shift = 0){
 						pixel_fifo->at(i-shift).create_sprite_px(get_pixel_rgb(sprite.palette, pal), sprite.sx, oam_idx, pal);
 				}
 				else{
-					if(pal != 0)
+					if(pal != 0){
 						pixel_fifo->at(i-shift).create_sprite_px(get_pixel_rgb(sprite.palette, pal), sprite.sx, oam_idx, pal);
+						if(sprite.tile == 0x54 && oam_idx == 19)
+							std::cout << std::hex << pixel_fifo->at(i-shift).value << " " << (int)i << std::endl;
+	
+					}
 				}
 			}
 
 			else{
 				if(pixel_fifo->at(i-shift).oam_idx > oam_idx && pal != 0)
 					pixel_fifo->at(i-shift).create_sprite_px(get_pixel_rgb(sprite.palette, pal), sprite.sx, oam_idx, pal);
+				
 	
 			}
 
@@ -463,6 +477,58 @@ void lcd_driver::debug_draw_oam(){
 					oam_debug_buffer[(i*40 + j*8 + k)*4] = rgb & 0x1F;
 					oam_debug_buffer[(i*40 + j*8 + k)*4 + 1] = (rgb & 0x3E0) >> 5;
 					oam_debug_buffer[(i*40 + j*8 + k)*4 + 2] = (rgb & 0x7C00) >> 10;
+				}
+			}
+		}
+	}
+
+}
+
+
+
+void lcd_driver::draw_bg_map(){
+
+	uint16_t i;
+	uint8_t j,k;
+
+	uint8_t** bg_tile_data = (lcd_registers[LCDC] & 1 << 4) ? vram1 : vram2; // 0x8000 or 0x8800
+	uint8_t** bg_tile_nums =  (lcd_registers[LCDC] & 1 << 3) ? chr_code2 : chr_code1; //0x9800 or 0x9C00
+	uint8_t* pal;
+	uint8_t* tile;
+	uint8_t color;
+	uint8_t vram_bank;
+	uint16_t rgb;
+
+	for(i = 0; i < 256; ++i){
+
+		for(j = 0; j < 32; ++j){
+
+			uint16_t block = (i/8)*32 + j;
+			uint8_t line = i%8;
+
+			if(gb_type != dmg){
+				pal = &cgb_bg_pal[ 8 * ((bg_tile_nums[1][block] & 0x7)) ];
+				vram_bank = (bg_tile_nums[1][block] & 1 << 3) ? 1 : 0;
+			}
+			else{
+				pal = &lcd_registers[BGP];
+				vram_bank = 0;
+			}
+
+			if(bg_tile_data == vram2)
+				tile = &bg_tile_data[vram_bank][(int8_t)(bg_tile_nums[0][block]) * 16 + line * 2];
+			else
+				tile = &bg_tile_data[vram_bank][bg_tile_nums[0][block] * 16 + line * 2];
+
+			for(k = 0; k < 8; ++k){
+				color = get_palette_index(tile, k);
+				if(gb_type == dmg)
+					bg_map_buffer[(i*256 + j*8 + k)*4] = get_pixel_mono(pal, color);
+				else{
+					rgb = get_pixel_rgb(pal, color);
+					bg_map_buffer[(i*256 + j*8 + k)*4] = rgb & 0x1F;
+					bg_map_buffer[(i*256 + j*8 + k)*4 + 1] = (rgb & 0x3E0) >> 5;
+					bg_map_buffer[(i*256 + j*8 + k)*4 + 2] = (rgb & 0x7C00) >> 10;
 				}
 			}
 		}
