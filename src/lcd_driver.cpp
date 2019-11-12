@@ -463,6 +463,11 @@ void lcd_driver::restore_fifo(std::vector<pixel> &vec){
 		if(px.type == obj){
 			if(!pixel_fifo->at(i).priority_over_obj)
 				pixel_fifo->at(i) = px;
+			else{
+				if(pixel_fifo->at(i).color_no == 0)
+					pixel_fifo->at(i) = px;
+			}
+				
 		}
 		++i;	
 	}
