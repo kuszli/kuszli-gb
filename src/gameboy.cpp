@@ -12,6 +12,7 @@ gameboy::gameboy(): button(0), cycles(0), cycles_count(0), gb_type(dmg)
 	_interrupts = new interrupts(memory);
 	_audio_controller = new audio_controller(memory);
 	_serial = new serial(memory);
+	deb = false;
 }
 
 
@@ -69,6 +70,10 @@ void gameboy::run(){
 		_joypad->update(button);
 		_cpu->handle_interrupts(_interrupts->check());
 
+		if(deb){
+			debug();
+			std::cin.get();
+		}
 		if(memory->operator[](0xFF44) == 153)
 			break;
 
@@ -134,3 +139,9 @@ void gameboy::load_state(){
 
 }
 
+void gameboy::debug(){
+
+	_cpu->print_regs();
+
+
+}

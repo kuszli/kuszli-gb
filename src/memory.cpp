@@ -4,18 +4,16 @@
 _memory::_memory(){
 
 	memory = new uint8_t[65536];
-	wram_bank = vram_bank = 0; //
+	wram_bank = vram_bank = 0; 
 	rom_connected = false;
 	dummy = 0xFF;
-	dma_time = false; //
-	dma_request = false; //
-	hblank_dma_time = false; //
-	hdma_request = false; //
-//	hdma_transfer = false;
-//	gdma_transfer = 0;
-	hdma_src_trigger = false; //
-	hdma_dest_trigger = false; //
-	serial_trigg = false; //
+	dma_time = false; 
+	dma_request = false; 
+	hblank_dma_time = false; 
+	hdma_request = false; 
+	hdma_src_trigger = false; 
+	hdma_dest_trigger = false; 
+	serial_trigg = false; 
 	rom = nullptr;
 	external_ram = nullptr;
 	rom_banks = nullptr;
@@ -27,10 +25,10 @@ _memory::_memory(){
 	ob_palette_ram = new uint8_t[64];
 	ram_enable = false;
 	ex_ram = false;
-	chan1_trigg = false; //
-	chan2_trigg = false; //
-	chan3_trigg = false; //
-	chan4_trigg = false; //
+	chan1_trigg = false; 
+	chan2_trigg = false; 
+	chan3_trigg = false; 
+	chan4_trigg = false; 
 	mbc_type = none;
 	gb_type = dmg;
 }
@@ -73,12 +71,12 @@ _memory::~_memory(){
 
 void _memory::connect_rom(const std::string& rom_name){
 
-	bank_select1 = 1; //
-	bank_select2 = 0; //
-	bank_select3 = 0; //
+	bank_select1 = 1; 
+	bank_select2 = 0; 
+	bank_select3 = 0; 
 
 
-	mode_select = 0; //
+	mode_select = 0; 
 
 	rtc_registers = new uint8_t[5];
 	_rtc = new rtc(rtc_registers);

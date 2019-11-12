@@ -839,8 +839,7 @@ public:
 	const uint8_t speed() { return cpu_speed; }
 	void save_state(std::fstream *file);
 	void load_state(std::fstream* file);
-	uint8_t** regs;
-	uint16_t** regs16;
+	void print_regs();
 
 };
 

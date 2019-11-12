@@ -30,11 +30,14 @@ class sfml_interface{
 	uint8_t pal[16] = {255, 255, 255, 255, 160, 160, 160, 255, 75, 75, 75, 255, 0, 0, 0, 255};
 	sf::RenderWindow window;
 	sf::RenderWindow debug;
+	sf::RenderWindow bg_map_window;
 	sf::Texture texture;
 	sf::Texture oam_texture;
+	sf::Texture bg_map_texture;
 	sf::Texture palette;
 	sf::Sprite sprite;
 	sf::Sprite oam;
+	sf::Sprite bg_map;
 	sf::Event event;
 	sf::Shader shader;
 
@@ -45,6 +48,7 @@ class sfml_interface{
 	int64_t time_elapsed;
 	uint8_t emulation_speed;
 	bool oam_dbg;
+	bool bg_map_open;
 
 	void check_key(uint8_t &key);
 	void check_function_key();
@@ -59,6 +63,7 @@ public:
 	uint8_t get_key() const { return key; }
 	void display(const uint8_t* pixels);
 	void show_oam(const uint8_t* oam_pixels);
+	void show_bg_map(const uint8_t* oam_pixels);
 	void check_events();
 	//bool is_window_open() const { return window.isOpen(); }
 

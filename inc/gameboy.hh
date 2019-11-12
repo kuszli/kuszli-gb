@@ -20,6 +20,7 @@ class gameboy{
 	uint8_t cycles;
 	uint8_t button;
 	uint32_t cycles_count;
+	bool deb;
 
 	std::string rom_name;
 	_gb_type gb_type;
@@ -46,8 +47,11 @@ public:
 	void reset() {_cpu->reset();}
 	void save_state();
 	void load_state();
-	const uint8_t* get_display_data() const {return _lcd_driver->screen();}
-	const uint8_t* oam_debug() const {return _lcd_driver->oam_screen();}
+	void debug();
+	void set_deb() { deb = !deb; }
+	const uint8_t* get_display_data() const {return _lcd_driver->screen(); }
+	const uint8_t* oam_debug() const {return _lcd_driver->oam_screen(); }
+	const uint8_t* get_bg_map() const {return _lcd_driver->bg_map_screen(); }
 	const int16_t* get_audio_buffer() { return _audio_controller->get_buffer(); }
 	const int16_t* get_busy_audio_buffer() { return _audio_controller->busy_buffer(); }	
 	const uint32_t get_audio_buffer_size() { return _audio_controller->get_buffer_size(); }

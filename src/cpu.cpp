@@ -18,9 +18,6 @@ cpu::cpu(_memory* mem){
 
 	cpu_speed = 1;
 
-	regs = new uint8_t*[8]{&A,&F,&B,&C,&D,&E,&H,&L};
-	regs16 = new uint16_t*[2]{&SP,&PC};
-
 }
 
 cpu::~cpu(){
@@ -124,6 +121,19 @@ void cpu::load_state(std::fstream* file){
 	file->read((char*)&PC, sizeof(PC));
 
 	f(IME); f(EI_scheduled); f(_state); f(cpu_speed);
+
+}
+
+void cpu::print_regs(){
+
+	std::cout << std::hex << "AF: " << AF << " BC: " << BC 
+					<< "\nDE: " << DE << " HL: " << HL << std::endl;
+	
+	std::cout << "PC: " << PC << " SP: " << SP << std::endl;
+	
+	std::cout << "STAT: " << (int)(*memory)[0xFF41] << std::endl;
+
+	std::cout << "#################\n";
 
 }
 

@@ -44,6 +44,7 @@ sfml_interface::sfml_interface(gameboy* g){
 	prepare_buttons();
 
 	oam_dbg = false;
+	bg_map_open = false;
 
 	palette.create(4,1);
    palette.update(pal);
@@ -106,6 +107,8 @@ void sfml_interface::event_loop(){
 
 		if(oam_dbg)
 			show_oam(gb->oam_debug());
+		if(bg_map_open)
+			show_bg_map(gb->get_bg_map());
 
 		check_events();
 		gb->set_buttons(get_key());
@@ -139,6 +142,14 @@ void sfml_interface::show_oam(const uint8_t* oam_pixels){
 
 }
 
+void sfml_interface::show_bg_map(const uint8_t* pixels){
+
+	bg_map_texture.update(pixels);
+	bg_map_window.draw(bg_map, &shader);
+	bg_map_window.display();
+
+}
+
 void sfml_interface::check_events(){
 
 	while (window.pollEvent(event)){
@@ -157,6 +168,19 @@ void sfml_interface::check_events(){
 			if (event.type == sf::Event::Closed){
 				oam_dbg = false;
 				debug.close();
+			}
+			else if(event.type == sf::Event::KeyPressed || event.type == sf::Event::KeyReleased){
+				check_function_key();
+			}
+
+		}
+	}
+
+	if(bg_map_open){
+		while (bg_map_window.pollEvent(event)){
+			if (event.type == sf::Event::Closed){
+				bg_map_open = false;
+				bg_map_window.close();
 			}
 			else if(event.type == sf::Event::KeyPressed || event.type == sf::Event::KeyReleased){
 				check_function_key();
@@ -236,7 +260,20 @@ void sfml_interface::process_options(uint8_t opt){
 		}
 
 		case BG_MAP_WIN:{
-		break;
+			if(!bg_map_open){
+				bg_map_open = true;
+				bg_map_window.create(sf::VideoMode(256, 256), "bg map viewer");
+				if(bg_map_texture.getSize().x == 0){
+					bg_map_texture.create(256, 256);
+					bg_map_window.setSize(sf::Vector2u(512,512));
+					bg_map.setTexture(bg_map_texture);
+				}
+			}
+			else{
+				bg_map_open = false;
+				bg_map_window.close();
+			}
+			break;
 		}
 
 		case VRAM_WIN:{
@@ -261,7 +298,8 @@ void sfml_interface::process_options(uint8_t opt){
 		}
 
 		case DEBUG:{
-		break;
+			gb->set_deb(); //debug();
+			break;
 		}
 	
 		default:
