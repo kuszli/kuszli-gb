@@ -39,7 +39,6 @@ void dma::transfer_cgb(){
 	}
 
 	else{	
-
 		std::memmove((void*)&(*memory)[0x8000 + hdma_dest], (void*)&(*memory)[hdma_src], 16*(hdma_len + 1));
 		(*memory)[0xFF55] = 0xFF;
 		hdma_src += 16*(hdma_len + 1);
@@ -62,10 +61,14 @@ void dma::update(uint8_t cycles){
 		memory->hdma_request = false;
 		hdma_len = (*memory)[0xFF55] & 0x7F;
 
-		if(memory->hdma_src_trigger)
+		if(memory->hdma_src_trigger){
 			hdma_src = ( ((*memory)[0xFF51] << 8) | (*memory)[0xFF52] ) & 0xFFF0;
-		if(memory->hdma_dest_trigger)	
+			memory->hdma_src_trigger = false;
+		}
+		if(memory->hdma_dest_trigger){
 			hdma_dest = ( ((*memory)[0xFF53] << 8) | (*memory)[0xFF54] ) & 0x1FF0;
+			memory->hdma_dest_trigger = false;
+		}
 
 		if((*memory)[0xFF55] & 1 << 7){ //hblank hdma mode
 			(*memory)[0xFF55] &= ~(1 << 7);
@@ -90,7 +93,6 @@ void dma::update(uint8_t cycles){
 	}
 
 	if(memory->hblank_dma_time){
-
 		if( ((*memory)[0xFF41] & 0x3) == 0 && last_lcd_mode == 3){ //hblank mode
 			transfer_cgb();
 			hdma_transfer = true;
