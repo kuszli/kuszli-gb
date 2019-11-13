@@ -27,10 +27,7 @@ _memory::_memory(){
 	ob_palette_ram = new uint8_t[64];
 	ram_enable = false;
 	ex_ram = false;
-	chan1_trigg = false;
-	chan2_trigg = false;
-	chan3_trigg = false;
-	chan4_trigg = false;
+	chan1_trigg = chan2_trigg = chan3_trigg = chan4_trigg = false;
 	mbc_type = none;
 	gb_type = dmg;
 }
@@ -372,14 +369,11 @@ void _memory::write_to_hram(const uint16_t index, const uint8_t value){
 		memory[0xFF04] = 0;
 	}
 
-
 	else if(index == 0xFF14){
 		if(value & 1 << 7)
 			chan1_trigg = true;
 		memory[index] = value;
 	}
-
-
 
 	else if(index == 0xFF19){
 		if(value & 1 << 7)
@@ -397,13 +391,14 @@ void _memory::write_to_hram(const uint16_t index, const uint8_t value){
 	}
 
 	else if(index == 0xFF1E){
-		if((value & 1 << 7))
+		if(value & 1 << 7)
 			chan3_trigg = true;
 		memory[index] = value;
 	}
 
+
 	else if(index == 0xFF23){
-		if((value & 1 << 7))
+		if(value & 1 << 7)
 			chan4_trigg = true;
 		memory[index] = value;
 	}

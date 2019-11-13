@@ -130,23 +130,17 @@ void audio_controller::update_channel1(){
 		channel1.freq = ((audio_registers[S1_CONT] & 0x7) << 8) | audio_registers[S1_FREQ];
 		channel1.shadow_freq = channel1.freq;
 		channel1.sample_count = 4*(2048 - channel1.freq);
-		channel1.freq_counter = 0;
-
-
+		channel1.freq_counter &= 0x3;
 
 		channel1.envelope_counter = (audio_registers[S1_ENVELOPE] & 0x7) * 65536;
-
 		channel1.volume = ((audio_registers[S1_ENVELOPE] & 0xF0) >> 4);
-
 		channel1.sweep_step = 1 << (audio_registers[S1_SWEEP] & 0x7);
 		channel1.sweep_counter = 32768 * ((audio_registers[S1_SWEEP] & 0x70) >> 4);
-
 		channel1.duty = duties[ ((audio_registers[S1_LENGTH] & 0xC0) >> 6) ];
 		channel1.duty_cycle = 0;
 		channel1.enable = true;
 		channel1.reset_trigg();
-		
-		
+			
 	}
 
 	if(!channel1.enable){
@@ -160,6 +154,10 @@ void audio_controller::update_channel1(){
 	}
 
 
+	
+
+	
+
 	if((audio_registers[S1_SWEEP] & 0x70) && (audio_registers[S1_SWEEP] & 0x7)){ //sweep time > 0 and sweep step > 0
 
 		--channel1.sweep_counter;
@@ -172,7 +170,7 @@ void audio_controller::update_channel1(){
 					channel1.shadow_freq = test;
 				channel1.sample_count = 4*(2048 - channel1.shadow_freq);
 			}
-			else{
+			else{ //addiction mode
 				channel1.shadow_freq = channel1.shadow_freq + channel1.freq/channel1.sweep_step;
 				if(channel1.shadow_freq > 2047){
 					channel1.enable = false;
@@ -188,6 +186,15 @@ void audio_controller::update_channel1(){
 		}
 
 	}
+	else{
+		channel1.freq = ((audio_registers[S1_CONT] & 0x7) << 8) | audio_registers[S1_FREQ];
+		if(channel1.sample_count != (2048 - channel1.freq)*4){
+			channel1.sample_count = (2048 - channel1.freq)*4;
+			channel1.freq_counter &= 0x3;
+		}
+
+	}
+		
 	
 	if((audio_registers[S1_ENVELOPE] & 0x7) != 0){
 
@@ -224,8 +231,6 @@ void audio_controller::update_channel1(){
 
 	
 	else{
-		
-
 
 		if(channel1.length != 0)
 			channel1.amplitude = channel1.volume * channel1.duty[channel1.duty_cycle];
@@ -261,22 +266,19 @@ void audio_controller::update_channel2(){
 		else
 			channel2.length = 16384 *( 64 - (audio_registers[S2_LENGTH] & 0x3F));
 
-		
 		channel2.freq = ((audio_registers[S2_CONT] & 0x7) << 8) | audio_registers[S2_FREQ];
 		channel2.sample_count = 4*(2048 - channel2.freq);
 		channel2.freq_counter = channel2.freq_counter & 0x3;
 
-
 		channel2.envelope_counter = (audio_registers[S2_ENVELOPE] & 0x7) * 65536;
-
 		channel2.volume = ((audio_registers[S2_ENVELOPE] & 0xF0) >> 4);
-
 		channel2.duty = duties[ ((audio_registers[S2_LENGTH] & 0xC0) >> 6) ];
 		channel2.duty_cycle = 0;
 		channel2.enable = true;
 		channel2.reset_trigg();
-		
+			
 	}
+
 
 	if(!channel2.enable){
 		channel2.amplitude = 0;
@@ -286,6 +288,12 @@ void audio_controller::update_channel2(){
 	if(!(audio_registers[S2_ENVELOPE] & 0xF8)){
 		channel2.amplitude = 0;
 		return;
+	}
+
+	channel2.freq = ((audio_registers[S2_CONT] & 0x7) << 8) | audio_registers[S2_FREQ];
+	if(channel2.sample_count != (2048 - channel2.freq)*4){
+		channel2.sample_count = (2048 - channel2.freq)*4;
+		channel2.freq_counter &= 0x3;
 	}
 	
 	if((audio_registers[S2_ENVELOPE] & 0x7) != 0){
@@ -349,25 +357,21 @@ void audio_controller::update_channel3(){
 
 	if(channel3.triggered()){
 
-		
 		channel3.len_enable = (audio_registers[S3_CONT] & 1 << 6) ? true : false;
-
-		audio_registers[AUDIO_CONT] |= 1 << 2;
 
 		if(channel3.length == 0)
 			channel3.length = 16384*256;
 		else
 			channel3.length = 16384*(256 - audio_registers[S3_LENGTH]);
-		
+
 		channel3.freq = ((audio_registers[S3_CONT] & 0x7) << 8) | audio_registers[S3_FREQ];
-		channel3.sample_count = (2048 - channel3.freq) * 2;
-		
-		channel3.freq_counter = 0;
+		channel3.sample_count = (2048 - channel3.freq)*2;
+		channel3.freq_counter &= 0x3;
 		channel3.curr_wave_pos = 0;
 		channel3.wave_buffer = audio_registers[WAVE_PATTERN] & 0xF;
 		channel3.enable = true;
 		channel3.reset_trigg();
-		
+
 	}
 
 
@@ -381,14 +385,17 @@ void audio_controller::update_channel3(){
 		return;
 	}
 
-
+		channel3.freq = ((audio_registers[S3_CONT] & 0x7) << 8) | audio_registers[S3_FREQ];
+		if(channel3.sample_count != (2048 - channel3.freq)*2){
+			channel3.sample_count = (2048 - channel3.freq)*2;
+			channel3.freq_counter &= 0x3;
+		}
+			
 
 	if(channel3.curr_wave_pos % 2 == 0)
 		channel3.volume = channel3.wave_buffer >> 4;
 	else
 		channel3.volume = channel3.wave_buffer & 0xF;
-	
-	
 
 	uint8_t pattern = (audio_registers[S3_PATTERN] & 0x60) >> 5;
 
@@ -397,7 +404,6 @@ void audio_controller::update_channel3(){
 	
 	else if( pattern >= 2)
 		channel3.volume = channel3.volume >> (pattern-1);
-	
 
 	++channel3.freq_counter;
 	
@@ -408,9 +414,7 @@ void audio_controller::update_channel3(){
 		if(channel3.curr_wave_pos == WAVE_PATTERN_SIZE*2)
 			channel3.curr_wave_pos = 0;
 
-
 		channel3.wave_buffer = audio_registers[WAVE_PATTERN + channel3.curr_wave_pos/2];
-
 		channel3.freq_counter = 0;
 	}
 
@@ -418,17 +422,12 @@ void audio_controller::update_channel3(){
 	
 	if(!channel3.len_enable)
 		channel3.amplitude = channel3.volume;
-	
 
 	else{
-		
-
-
+	
 		if(channel3.length != 0){
 			channel3.amplitude = channel3.volume;
 		}
-
-		
 		else{
 			audio_registers[AUDIO_CONT] &= ~(1 << 2);
 			channel3.amplitude = 0;
@@ -436,10 +435,8 @@ void audio_controller::update_channel3(){
 		}
 
 		--channel3.length;
-
 	}
 
-	
 }
 
 
@@ -449,10 +446,8 @@ void audio_controller::update_channel4(){
 
 	if(channel4.triggered()){
 		
-		
-		channel4.len_enable = (audio_registers[S4_CONT] & 1 << 6) ? true : false;
-		
 		audio_registers[AUDIO_CONT] |= 1 << 3;
+		channel4.len_enable = (audio_registers[S4_CONT] & 1 << 6) ? true : false;
 
 		if(channel4.length == 0)
 			channel4.length = 16384*64;
@@ -473,7 +468,7 @@ void audio_controller::update_channel4(){
 		lfsr = 32767;
 		channel4.enable = true;
 		channel4.reset_trigg();
-		
+			
 	}
 
 

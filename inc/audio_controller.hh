@@ -11,32 +11,26 @@
 
 struct channel{
 
-	uint8_t channel_no;
 	int8_t amplitude;
 	uint8_t volume;
 	const uint8_t* duty;
 	uint8_t duty_cycle;
 	uint32_t freq;
 	uint32_t shadow_freq;
-	uint32_t real_freq;
 	uint32_t freq_counter;
 	uint32_t sweep_counter;
 	uint8_t sweep_step;
 	uint32_t length;
-	uint32_t length_counter;
 	uint32_t sample_count;
-	uint8_t envelope_steps;
 	uint32_t envelope_counter;
 	uint8_t curr_wave_pos;
 	uint8_t wave_buffer;
 	uint8_t prescaler;
 	bool* trigg;
 	bool len_enable;
-	float wave_timer;
-	float wave_step;
 	bool enable;
 	
-	channel(): volume(0), real_freq(1024), freq_counter(0), envelope_counter(0), enable(false){}
+	channel(): volume(0), freq_counter(0), envelope_counter(0), enable(false){}
 	bool triggered() { return *trigg; }
 	void reset_trigg() { *trigg = false; }
 
@@ -56,7 +50,7 @@ class audio_controller{
 
 	channel channel1, channel2, channel3, channel4;
 
-
+	
 	int16_t* sample_buffer;
 	uint32_t ready_buff_pos;
 	uint16_t buff_size;
