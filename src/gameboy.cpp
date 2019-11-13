@@ -70,10 +70,9 @@ void gameboy::run(){
 		_joypad->update(button);
 		_cpu->handle_interrupts(_interrupts->check());
 
-		if(deb){
+		if(deb)
 			debug();
-			std::cin.get();
-		}
+		
 		if(memory->operator[](0xFF44) == 153)
 			break;
 
@@ -141,7 +140,12 @@ void gameboy::load_state(){
 
 void gameboy::debug(){
 
+	static std::string command;
 	_cpu->print_regs();
 
-
+	std::getline(std::cin, command);
+	if(command == "exit" || command == "e"){
+		deb = false;
+	}
+	
 }

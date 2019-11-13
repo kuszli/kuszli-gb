@@ -131,7 +131,7 @@ void cpu::print_regs(){
 	
 	std::cout << "PC: " << PC << " SP: " << SP << std::endl;
 	
-	std::cout << "STAT: " << (int)(*memory)[0xFF41] << std::endl;
+	std::cout << "LCDC: " << (int)(*memory)[0xFF40]  << " STAT: " << (int)(*memory)[0xFF41] << std::endl;
 
 	std::cout << "#################\n";
 

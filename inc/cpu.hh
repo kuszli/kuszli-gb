@@ -840,6 +840,7 @@ public:
 	void save_state(std::fstream *file);
 	void load_state(std::fstream* file);
 	void print_regs();
+	const uint16_t current_address() { return PC; }
 
 };
 
