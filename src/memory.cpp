@@ -459,7 +459,7 @@ void _memory::write_to_hram(const uint16_t index, const uint8_t value){
 	}
 
 	else if(index == 0xFF55){
-		
+
 		if(gb_type != dmg)
 			hdma_request = true;
 

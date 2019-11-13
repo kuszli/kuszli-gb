@@ -14,14 +14,11 @@ class dma{
 
 	const uint16_t transfer_time = 640;
 	uint16_t counter;
-//	bool dma_time;
-//	bool hblank_dma_time;
 	uint16_t hdma_src;
 	uint16_t hdma_dest;
 	uint8_t hdma_len;
-//	uint8_t hdma_mode;
 	uint8_t last_lcd_mode; //for hblank dma
-//	uint16_t hdma_counter;
+
 
 	_memory* memory;
 	uint8_t* dma_register;
