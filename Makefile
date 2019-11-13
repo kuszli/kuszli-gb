@@ -1,74 +1,56 @@
-CXXFLAGS = -fPIC -c -std=c++11 -O2 
+CXXFLAGS = -c -std=c++11 -O2
+CXXFLAGS_DEBUG = -c -std=c++11 -g -O0
 LIBS = -lsfml-graphics -lsfml-window -lsfml-system -lsfml-audio
 OBJ = obj
+DBG_OBJ = obj/debug
+LIB_OBJ = obj/lib
 SRC = src
 INC = -I inc
 
 OBJS = $(OBJ)/main.o $(OBJ)/gameboy.o $(OBJ)/cpu.o $(OBJ)/interrupts.o $(OBJ)/lcd_driver.o $(OBJ)/timer.o $(OBJ)/memory.o $(OBJ)/joypad.o $(OBJ)/dma.o $(OBJ)/sfml_interface.o $(OBJ)/cmd_options.o $(OBJ)/audio_controller.o $(OBJ)/wav_header.o $(OBJ)/sfml_audio.o $(OBJ)/serial.o $(OBJ)/rtc.o
 
-LIB_OBJS = $(OBJ)/gameboy.o $(OBJ)/cpu.o $(OBJ)/interrupts.o $(OBJ)/lcd_driver.o $(OBJ)/timer.o $(OBJ)/memory.o $(OBJ)/joypad.o $(OBJ)/dma.o $(OBJ)/audio_controller.o $(OBJ)/wav_header.o $(OBJ)/serial.o $(OBJ)/rtc.o
+DBG_OBJS = $(DBG_OBJ)/main.o $(DBG_OBJ)/gameboy.o $(DBG_OBJ)/cpu.o $(DBG_OBJ)/interrupts.o $(DBG_OBJ)/lcd_driver.o $(DBG_OBJ)/timer.o $(DBG_OBJ)/memory.o $(DBG_OBJ)/joypad.o $(DBG_OBJ)/dma.o $(DBG_OBJ)/sfml_interface.o $(DBG_OBJ)/cmd_options.o $(DBG_OBJ)/audio_controller.o $(DBG_OBJ)/wav_header.o $(DBG_OBJ)/sfml_audio.o $(DBG_OBJ)/serial.o $(DBG_OBJ)/rtc.o
 
-LIB_AUDIO = $(OBJ)/sfml_audio.o
+LIB_OBJS = $(LIB_OBJ)/gameboy.o $(LIB_OBJ)/cpu.o $(LIB_OBJ)/interrupts.o $(LIB_OBJ)/lcd_driver.o $(LIB_OBJ)/timer.o $(LIB_OBJ)/memory.o $(LIB_OBJ)/joypad.o $(LIB_OBJ)/dma.o $(LIB_OBJ)/audio_controller.o $(LIB_OBJ)/wav_header.o $(LIB_OBJ)/serial.o $(LIB_OBJ)/rtc.o
 
-kuszli-gb: $(OBJS)
+LIB_AUDIO = $(LIB_OBJ)/sfml_audio.o
+
+
+kuszli-gb: pre $(OBJS)
 	g++ $(OBJS) $(LIBS) -o kuszli-gb
 
-install: $(LIB_OBJS) $(LIB_AUDIO)
+debug: pre_dbg $(DBG_OBJS)
+	g++ $(DBG_OBJS) $(LIBS) -o kuszli-gb
+	
+install: pre_install $(LIB_OBJS) $(LIB_AUDIO)
 	mkdir -p  /usr/local/lib/kuszli-gb
 	g++ -shared $(LIB_OBJS) -o /usr/local/lib/kuszli-gb/libkuszli-gb.so
 	g++ -shared $(LIB_AUDIO) -o /usr/local/lib/kuszli-gb/libkuszli-gb-audio.so
 	mkdir -p /usr/local/include/kuszli-gb
 	cp inc/*.hh /usr/local/include/kuszli-gb && cp inc/*.h /usr/local/include/kuszli-gb
 
-$(OBJ)/main.o: $(SRC)/main.cpp
-	g++ $(CXXFLAGS) $(INC) $(SRC)/main.cpp -o $(OBJ)/main.o
+$(OBJ)/%.o: $(SRC)/%.cpp 
+	g++ $(CXXFLAGS) $(INC) $< -o $@
 
-$(OBJ)/gameboy.o: $(SRC)/gameboy.cpp
-	g++ $(CXXFLAGS) $(INC) $(SRC)/gameboy.cpp -o $(OBJ)/gameboy.o
+$(DBG_OBJ)/%.o: $(SRC)/%.cpp 
+	g++ $(CXXFLAGS_DEBUG) $(INC) $< -o $@
 
-$(OBJ)/cpu.o: $(SRC)/cpu.cpp 
-	g++ $(CXXFLAGS) $(INC) $(SRC)/cpu.cpp -o $(OBJ)/cpu.o
+$(LIB_OBJ)/%.o: $(SRC)/%.cpp
+	mkdir -p obj/lib
+	g++ $(CXXFLAGS) -fPIC -O2 $(INC) $< -o $@
 
-$(OBJ)/interrupts.o: $(SRC)/interrupts.cpp 
-	g++ $(CXXFLAGS) $(INC) $(SRC)/interrupts.cpp -o $(OBJ)/interrupts.o
+pre:
+	mkdir -p obj
 
-$(OBJ)/lcd_driver.o: $(SRC)/lcd_driver.cpp 
-	g++ $(CXXFLAGS) $(INC) $(SRC)/lcd_driver.cpp -o $(OBJ)/lcd_driver.o
+pre_dbg:
+	mkdir -p obj/debug
 
-$(OBJ)/timer.o: $(SRC)/timer.cpp 
-	g++ $(CXXFLAGS) $(INC) $(SRC)/timer.cpp -o $(OBJ)/timer.o
-
-$(OBJ)/memory.o: $(SRC)/memory.cpp
-	g++ $(CXXFLAGS) $(INC) $(SRC)/memory.cpp -o $(OBJ)/memory.o
-
-$(OBJ)/joypad.o: $(SRC)/joypad.cpp
-	g++ $(CXXFLAGS) $(INC) $(SRC)/joypad.cpp -o $(OBJ)/joypad.o
-
-$(OBJ)/dma.o: $(SRC)/dma.cpp
-	g++ $(CXXFLAGS) $(INC) $(SRC)/dma.cpp -o $(OBJ)/dma.o
-
-$(OBJ)/sfml_interface.o: $(SRC)/sfml_interface.cpp
-	g++ $(CXXFLAGS) $(INC) $(SRC)/sfml_interface.cpp -o $(OBJ)/sfml_interface.o
-
-$(OBJ)/cmd_options.o: $(SRC)/cmd_options.cpp
-	g++ $(CXXFLAGS) $(INC) $(SRC)/cmd_options.cpp -o $(OBJ)/cmd_options.o
-
-$(OBJ)/audio_controller.o: $(SRC)/audio_controller.cpp
-	g++ $(CXXFLAGS) $(INC) $(SRC)/audio_controller.cpp -o $(OBJ)/audio_controller.o
-
-$(OBJ)/wav_header.o: $(SRC)/wav_header.cpp
-	g++ $(CXXFLAGS) $(INC) $(SRC)/wav_header.cpp -o $(OBJ)/wav_header.o
-
-$(OBJ)/serial.o: $(SRC)/serial.cpp
-	g++ $(CXXFLAGS) $(INC) $(SRC)/serial.cpp -o $(OBJ)/serial.o
-
-$(OBJ)/sfml_audio.o: $(SRC)/sfml_audio.cpp
-	g++ $(CXXFLAGS) $(INC) $(SRC)/sfml_audio.cpp -o $(OBJ)/sfml_audio.o
-
-$(OBJ)/rtc.o: $(SRC)/rtc.cpp
-	g++ $(CXXFLAGS) $(INC) $(SRC)/rtc.cpp -o $(OBJ)/rtc.o
+pre_install:
+	mkdir -p obj/lib
 
 clean:
 	rm -f $(OBJ)/*.o
+	rm -f $(DBG_OBJ)/*.o
+	rm -f $(LIB_OBJ)/*.o
 
 
