@@ -139,7 +139,7 @@ void audio_controller::update_channel1(){
 		channel1.volume = ((audio_registers[S1_ENVELOPE] & 0xF0) >> 4);
 
 		channel1.sweep_step = 1 << (audio_registers[S1_SWEEP] & 0x7);
-		channel1.sweep_counter = 32768 * (audio_registers[S1_SWEEP] & 0x70) >> 4;
+		channel1.sweep_counter = 32768 * ((audio_registers[S1_SWEEP] & 0x70) >> 4);
 
 		channel1.duty = duties[ ((audio_registers[S1_LENGTH] & 0xC0) >> 6) ];
 		channel1.duty_cycle = 0;
@@ -159,28 +159,29 @@ void audio_controller::update_channel1(){
 		return;
 	}
 
-	if( ((audio_registers[S1_SWEEP] & 0x70) >> 4) != 0){
+
+	if((audio_registers[S1_SWEEP] & 0x70) && (audio_registers[S1_SWEEP] & 0x7)){ //sweep time > 0 and sweep step > 0
 
 		--channel1.sweep_counter;
 		
 		if(channel1.sweep_counter == 0){
 			
-			if(audio_registers[S1_SWEEP] & 1 << 3){
-				channel1.shadow_freq = channel1.shadow_freq - channel1.shadow_freq/channel1.sweep_step;
+			if(audio_registers[S1_SWEEP] & 1 << 3){ //subtraction mode
+				int test = channel1.shadow_freq - channel1.freq/channel1.sweep_step;
+				if(test >= 0)
+					channel1.shadow_freq = test;
 				channel1.sample_count = 4*(2048 - channel1.shadow_freq);
-				
 			}
 			else{
-				channel1.shadow_freq = channel1.shadow_freq + channel1.shadow_freq/channel1.sweep_step;
+				channel1.shadow_freq = channel1.shadow_freq + channel1.freq/channel1.sweep_step;
 				if(channel1.shadow_freq > 2047){
 					channel1.enable = false;
 					audio_registers[AUDIO_CONT] &= ~(1 << 0);
 					channel1.amplitude = 0;
 					return;
 				}
-				else{
+				else
 					channel1.sample_count = 4*(2048 - channel1.shadow_freq);
-				}
 			}
 
 			channel1.sweep_counter = 32768 * (audio_registers[S1_SWEEP] & 0x70) >> 4;
