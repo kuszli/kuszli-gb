@@ -121,6 +121,7 @@ void cpu::load_state(std::fstream* file){
 	file->read((char*)&PC, sizeof(PC));
 
 	f(IME); f(EI_scheduled); f(_state); f(cpu_speed);
+#undef f
 
 }
 
@@ -282,7 +283,7 @@ uint8_t cpu::STOP(){
 		(*memory)[0xFF4D] = (cpu_speed - 1) << 7;
 	}
 
-	PC++;
+//	PC++;
 	return 4;
 }
 

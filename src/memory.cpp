@@ -777,6 +777,7 @@ void _memory::load_state(std::fstream* file){
 
 	f(ram_enable); f(dma_request); f(hdma_request); f(dma_time); f(hblank_dma_time); f(hdma_src_trigger);
 	f(hdma_dest_trigger); f(serial_trigg); f(chan1_trigg); f(chan2_trigg); f(chan3_trigg); f(chan4_trigg);
+#undef f
 
 }
 
