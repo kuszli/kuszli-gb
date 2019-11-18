@@ -42,3 +42,11 @@ When emulator is compiled, copy sfml dll's to folder where executable file is.
 #### Visual Studio
 Open Visual Studio in kuszli-gb root, go to cmake settings and set command line arguments to
 `-DSFML_DIR=path/to/sfml/root`. Build executable file and copy sfml dll's to executable file folder.
+
+## Screenshots
+
+![kuszli-gb running](doc/screenshots/crystal.png)
+![kuszli-gb running](doc/screenshots/zeruda.png)
+![kuszli-gb running](doc/screenshots/wario.png)
+![kuszli-gb running](doc/screenshots/wendy.png)
+
