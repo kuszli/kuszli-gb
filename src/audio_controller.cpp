@@ -12,10 +12,12 @@ audio_controller::audio_controller(_memory* mem){
 	channel3.trigg = &mem->chan3_trigg;
 	channel4.trigg = &mem->chan4_trigg;
 
-	sample_buffer = new int16_t[22040];//16830];
-	sampling_freq = 44100;
+	sample_buffer = nullptr; //let the user decide how big buffer should be
+	sampling_freq = 32768; //default value
+	channels_count = 2; //default value
 	curr_buff_pos = 0;
 	ready_buff_pos = 0;
+	buff_count = 8; //how many buffers will be included in cyclic buffer
 	audio_registers[CHANNEL_CONT] &= 0xCC; //initial volume
 	counter = 0;
 
@@ -27,10 +29,17 @@ audio_controller::~audio_controller(){
 
 }
 
+void audio_controller::set_buffer_size(uint16_t buffer_size){
+	delete[] sample_buffer;
+	buff_size = buffer_size;
+	sample_buffer = new int16_t[buffer_size * buff_count]; //cyclic buffer consists of buff_count playback buffers
+}
 
 
 void audio_controller::update(const uint8_t cycles){
 
+	if(sample_buffer == nullptr)
+		return;
 
 	if(audio_registers[AUDIO_CONT] & 1 << 7){
 
@@ -69,13 +78,14 @@ void audio_controller::update(const uint8_t cycles){
 		uint8_t left_vol = (audio_registers[CHANNEL_CONT] & 0x7) + 1;
 		uint8_t right_vol = ((audio_registers[CHANNEL_CONT] & 0x70) >> 4) + 1;
 
-		sample_buffer[curr_buff_pos++] = 64 *
-		(channel1.amplitude * ch1_left_enable + channel2.amplitude * ch2_left_enable + channel3.amplitude * ch3_left_enable + channel4.amplitude * ch4_left_enable) * left_vol;
+		sample_buffer[curr_buff_pos++] = 64 * (channel1.amplitude * ch1_left_enable + channel2.amplitude * ch2_left_enable + 
+																channel3.amplitude * ch3_left_enable + channel4.amplitude * ch4_left_enable) * left_vol;
 
-		sample_buffer[curr_buff_pos++] = 64 *
-		(channel1.amplitude * ch1_right_enable + channel2.amplitude * ch2_right_enable + channel3.amplitude * ch3_right_enable + channel4.amplitude * ch4_right_enable) * right_vol;
+		if(channels_count > 1)
+			sample_buffer[curr_buff_pos++] = 64 * (channel1.amplitude * ch1_right_enable + channel2.amplitude * ch2_right_enable + 
+																channel3.amplitude * ch3_right_enable + channel4.amplitude * ch4_right_enable) * right_vol;
 
-		if(curr_buff_pos == 22040)//16380)
+		if(curr_buff_pos == buff_size * buff_count)
 			curr_buff_pos = 0;
 		
 	}
@@ -86,13 +96,13 @@ void audio_controller::update(const uint8_t cycles){
 
 const int16_t* audio_controller::get_buffer(){ 
 
-	int16_t left_limit = curr_buff_pos - 2204;//1638;
-	int16_t right_limit = curr_buff_pos + 2204;//1638;
+	int16_t left_limit = curr_buff_pos - buff_size;
+	int16_t right_limit = curr_buff_pos + buff_size;
 	
 	if(left_limit < 0)
-		left_limit = 22040 + left_limit;
-	if(right_limit > 22040)
-		right_limit -= 22040;
+		left_limit = buff_size * buff_count + left_limit;
+	if(right_limit > buff_size * buff_count)
+		right_limit -= buff_size * buff_count;
 
 	if(right_limit < left_limit){
 		if(ready_buff_pos > left_limit || ready_buff_pos < right_limit)
@@ -107,8 +117,8 @@ const int16_t* audio_controller::get_buffer(){
 
 
 	const int16_t* buff = const_cast<const int16_t*>(&sample_buffer[ready_buff_pos]);
-	ready_buff_pos += 2204;//1638;
-	if(ready_buff_pos >= 22040)//16380)
+	ready_buff_pos += buff_size;
+	if(ready_buff_pos >= buff_size * buff_count)
 		ready_buff_pos = 0;
 
 	return buff;

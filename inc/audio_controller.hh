@@ -46,7 +46,8 @@ class audio_controller{
 	const uint8_t duty_75[8] = {0, 1, 1, 1, 1, 1, 1, 0};
 	const uint8_t* duties[4] = {duty_12_5, duty_25, duty_50, duty_75};
 		
-	uint16_t sampling_freq;
+	uint32_t sampling_freq;
+	uint8_t channels_count;
 
 	channel channel1, channel2, channel3, channel4;
 
@@ -54,6 +55,7 @@ class audio_controller{
 	int16_t* sample_buffer;
 	uint32_t ready_buff_pos;
 	uint16_t buff_size;
+	uint8_t buff_count;
 	uint32_t curr_buff_pos;
 
 	uint16_t lfsr;
@@ -72,7 +74,9 @@ public:
 	audio_controller(_memory* mem);
 	~audio_controller();
 	void update(const uint8_t cycles);
-	void set_sampling_freq(uint16_t freq){ sampling_freq = freq; }
+	void set_sampling_freq(uint32_t freq){ sampling_freq = freq; }
+	void set_channels_count(uint8_t count){ channels_count = count > 1 ? 2 : 1; }
+	void set_buffer_size(uint16_t buffer_size);
 	const int16_t* get_buffer();
 	const uint32_t get_buffer_size() { return ready_buff_pos; }
 	const int16_t* busy_buffer() { return const_cast<const int16_t*>(sample_buffer); }
