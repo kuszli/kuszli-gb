@@ -34,6 +34,7 @@ class gameboy{
 
 
 public:
+
 	gameboy();
 	~gameboy();
 	_gb_type get_gb_type() { return gb_type; }
@@ -51,10 +52,7 @@ public:
 	void set_audio_buffer_size(uint16_t size){ _audio_controller->set_buffer_size(size); }
 
 	const int16_t* get_audio_buffer() { return _audio_controller->get_buffer(); }
-	const int16_t* get_busy_audio_buffer() { return _audio_controller->busy_buffer(); }	
-	const uint32_t get_audio_buffer_size() { return _audio_controller->get_buffer_size(); }
 	
-
 };
 
 

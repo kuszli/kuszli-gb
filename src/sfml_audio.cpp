@@ -7,7 +7,7 @@ sfml_audio::sfml_audio(gameboy* g, uint8_t channels, uint32_t sample_rate){
 	initialize(channels, sample_rate);
 	gb = g;
 	stop_request = false;
-	latency = 25; //in ms
+	latency = 40; //in ms
 	audio_buffer_size = sample_rate/((1000/latency)/channels);
 	if(audio_buffer_size % 2 != 0)
 		audio_buffer_size += 1;

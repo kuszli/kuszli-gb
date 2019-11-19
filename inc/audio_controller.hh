@@ -78,8 +78,7 @@ public:
 	void set_channels_count(uint8_t count){ channels_count = count > 1 ? 2 : 1; }
 	void set_buffer_size(uint16_t buffer_size);
 	const int16_t* get_buffer();
-	const uint32_t get_buffer_size() { return ready_buff_pos; }
-	const int16_t* busy_buffer() { return const_cast<const int16_t*>(sample_buffer); }
+
 };
 
 
