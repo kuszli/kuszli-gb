@@ -17,6 +17,7 @@ cpu::cpu(_memory* mem){
 	CB_array = new (uint8_t (cpu::*[256])()){ CB_ARRAY };
 
 	cpu_speed = 1;
+	interrupt_start = false;
 
 	regs = new uint8_t*[8]{&A,&F,&B,&C,&D,&E,&H,&L};
 	regs16 = new uint16_t*[2]{&SP,&PC};
@@ -63,6 +64,7 @@ bool cpu::handle_interrupts(uint8_t id){
 		memory->write(--SP, PC >> 8);
 		memory->write(--SP, PC & 0xFF); 
 		PC = interrupt_address[id];
+		interrupt_start = true;
 		return true;
 	}
 	else
@@ -87,6 +89,12 @@ uint8_t cpu::decode(){
 }
 
 uint8_t cpu::execute(const uint8_t opcode){
+
+	if(interrupt_start){
+		--PC;
+		interrupt_start = false;
+		return 20;
+	}
 
 	return (this->*opcode_array[opcode])();
 }

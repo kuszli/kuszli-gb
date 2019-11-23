@@ -52,6 +52,8 @@ carry flag (4 most significant bits)
 	bool EI_scheduled;
 
 	uint8_t cpu_speed;
+
+	bool interrupt_start;
 	
 	const uint8_t interrupt_address[5] = {0x40, 0x48, 0x50, 0x58, 0x60};
 
