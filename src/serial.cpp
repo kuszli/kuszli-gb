@@ -25,7 +25,7 @@ void serial::update(uint8_t cycles){
 		if(serial_cycles >= cycles_to_update){
 			serial_cycles -= cycles_to_update;
 			if(*control & 1 << 0){
-				*transfer_data = *transfer_data << 1;
+				*transfer_data = (*transfer_data << 1) | 0x1;
 				++bits_transfered;
 			}
 		}
